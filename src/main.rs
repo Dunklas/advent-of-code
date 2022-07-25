@@ -26,6 +26,7 @@ fn main() {
             panic!("Failed to read input: {}", e);
         }
     };
+    assert!(!input.is_empty());
     match year.as_str() {
         "2015" => match day.as_str() {
             "1" => {
