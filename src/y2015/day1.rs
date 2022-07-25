@@ -4,15 +4,12 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> i32 {
-    let mut floor = 0;
-    for c in input.chars() {
-        match c {
-            '(' => floor += 1,
-            ')' => floor -= 1,
-            _ => {}
-        }
-    }
-    return floor;
+    input.chars()
+        .fold(0, |sum, c| match c {
+            '(' => sum + 1,
+            ')' => sum - 1,
+            _ => sum
+        })
 }
 
 fn part2(input: &str) -> i32 {
@@ -24,8 +21,7 @@ fn part2(input: &str) -> i32 {
             _ => {}
         }
         if floor < 0 {
-            let i: i32 = i.try_into().unwrap();
-            return i + 1;
+            return 1 + i as i32;
         }
     }
     return -1;
