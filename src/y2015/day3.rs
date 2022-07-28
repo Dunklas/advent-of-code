@@ -5,54 +5,35 @@ pub fn solve(input: &str) {
     println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> u32 {
-    let mut x = 0;
-    let mut y = 0;
-    let mut visited = HashSet::new();
-    visited.insert((x, y));
-    for c in input.chars() {
-        match c {
-            '^' => y += 1,
-            'v' => y -= 1,
-            '>' => x += 1,
-            '<' => x -= 1,
-            _ => {}
-        }
-        visited.insert((x, y));
-    }
-    visited.len() as u32
+fn part2(input: &str) -> u32 {
+    let (santa, robot): (Vec<_>, Vec<_>) = input.chars()
+        .enumerate()
+        .partition(|(i, _c)| i % 2 == 0);
+    deliver_presents(santa.into_iter().map(|(_i, c)| c))
+        .union(&deliver_presents(robot.into_iter().map(|(_i, c)| c)))
+        .count() as u32
 }
 
-fn part2(input: &str) -> u32 {
-    let mut sx = 0;
-    let mut sy = 0;
-    let mut rx = 0;
-    let mut ry = 0;
-    let mut visited = HashSet::new();
-    visited.insert((sx, sy));
-    for (i, c) in input.chars().enumerate() {
-        let y = match c {
-            '^' => 1,
-            'v' => -1,
-            _ => 0
-        };
-        let x = match c {
-            '>' => 1,
-            '<' => -1,
-            _ => 0
-        };
-        if i % 2 == 0 {
-            sx += x;
-            sy += y;
-            visited.insert((sx, sy));
+fn part1(input: &str) -> u32 {
+    deliver_presents(input.chars()).len() as u32
+}
+
+fn deliver_presents<I>(instructions: I) -> HashSet<(i32, i32)>
+    where I: Iterator<Item = char> {
+    let mut visited = vec![(0, 0)].into_iter()
+        .collect::<HashSet<(i32, i32)>>();
+    let mut pos = (0, 0);
+    for c in instructions {
+        match c {
+            '^' => pos = (pos.0, pos.1 + 1),
+            'v' => pos = (pos.0, pos.1 - 1),
+            '>' => pos = (pos.0 + 1, pos.1),
+            '<' => pos = (pos.0 - 1, pos.1),
+            _ => {}
         }
-        else {
-            rx += x;
-            ry += y;
-            visited.insert((rx, ry));
-        }
+        visited.insert(pos);
     }
-    visited.len() as u32
+    visited
 }
 
 #[cfg(test)]
