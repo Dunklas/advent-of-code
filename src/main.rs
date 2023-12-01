@@ -4,6 +4,7 @@ use std::{
 };
 
 mod y2015;
+mod y2023;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -42,6 +43,14 @@ fn main() {
                 panic!("Solution does not exist for {} {}", year, day);
             }
         },
+        "2023" => match day.as_str() {
+            "1" => {
+                y2023::day1::solve(&input);
+            }
+            _ => {
+                panic!("Solution does not exist for {} {}", year, day);
+            }
+        }
         _ => {
             panic!("Solution does not exist for {} {}", year, day);
         }
