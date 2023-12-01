@@ -33,7 +33,7 @@ fn part2(input: &str) -> u32 {
                 second = Option::Some(digit);
             }
             let b = format!("{}{}", first.to_string(), second.unwrap_or(first));
-            // println!("{}", b);
+            println!("{}", b);
             return b;
         })
         .flat_map(|x| x.parse::<u32>())
@@ -72,13 +72,16 @@ mod tests {
 
     #[test]
     fn tmp() {
-        let mut test = "one2three4five6".chars();
+        let mut test = "onetwothreefourfivesixseveneightnine".chars();
         assert_eq!(Some(1u32), next_numeric(&mut test, true));
         assert_eq!(Some(2u32), next_numeric(&mut test, true));
         assert_eq!(Some(3u32), next_numeric(&mut test, true));
         assert_eq!(Some(4u32), next_numeric(&mut test, true));
         assert_eq!(Some(5u32), next_numeric(&mut test, true));
         assert_eq!(Some(6u32), next_numeric(&mut test, true));
+        assert_eq!(Some(7u32), next_numeric(&mut test, true));
+        assert_eq!(Some(8u32), next_numeric(&mut test, true));
+        assert_eq!(Some(9u32), next_numeric(&mut test, true));
     }
 
     #[test]
