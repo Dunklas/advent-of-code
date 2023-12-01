@@ -1,9 +1,10 @@
 use std::{
     env,
-    io::{self, Read}
+    io::{self, Read},
 };
 
 mod y2015;
+mod y2023;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -21,7 +22,7 @@ fn main() {
     };
     let mut input = String::new();
     match io::stdin().read_to_string(&mut input) {
-        Ok(_b) => {},
+        Ok(_b) => {}
         Err(e) => {
             panic!("Failed to read input: {}", e);
         }
@@ -31,12 +32,20 @@ fn main() {
         "2015" => match day.as_str() {
             "1" => {
                 y2015::day1::solve(&input);
-            },
+            }
             "2" => {
                 y2015::day2::solve(&input);
-            },
+            }
             "3" => {
                 y2015::day3::solve(&input);
+            }
+            _ => {
+                panic!("Solution does not exist for {} {}", year, day);
+            }
+        },
+        "2023" => match day.as_str() {
+            "1" => {
+                y2023::day1::solve(&input);
             }
             _ => {
                 panic!("Solution does not exist for {} {}", year, day);
