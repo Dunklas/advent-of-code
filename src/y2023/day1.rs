@@ -64,14 +64,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn tmp2() {
+        let mut test = "gqlp7".chars();
+        assert_eq!(Some(7u32), next_numeric(&mut test, false));
+        assert_eq!(None, next_numeric(&mut test, false));
+    }
+
+    #[test]
     fn tmp() {
         let mut test = "one2three4five6".chars();
-        assert_eq!(Some(1u32), next_numeric(&mut test));
-        assert_eq!(Some(2u32), next_numeric(&mut test));
-        assert_eq!(Some(3u32), next_numeric(&mut test));
-        assert_eq!(Some(4u32), next_numeric(&mut test));
-        assert_eq!(Some(5u32), next_numeric(&mut test));
-        assert_eq!(Some(6u32), next_numeric(&mut test));
+        assert_eq!(Some(1u32), next_numeric(&mut test, true));
+        assert_eq!(Some(2u32), next_numeric(&mut test, true));
+        assert_eq!(Some(3u32), next_numeric(&mut test, true));
+        assert_eq!(Some(4u32), next_numeric(&mut test, true));
+        assert_eq!(Some(5u32), next_numeric(&mut test, true));
+        assert_eq!(Some(6u32), next_numeric(&mut test, true));
     }
 
     #[test]
