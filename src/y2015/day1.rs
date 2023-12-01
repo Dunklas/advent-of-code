@@ -23,7 +23,7 @@ fn part2(input: &str) -> i32 {
             return 1 + i as i32;
         }
     }
-    return -1;
+    -1
 }
 
 #[cfg(test)]

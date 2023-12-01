@@ -6,7 +6,7 @@ pub fn solve(input: &str) {
 fn part1(input: &str) -> i32 {
     input
         .lines()
-        .map(|line| line.split("x"))
+        .map(|line| line.split('x'))
         .map(|mut parts| {
             (
                 parts.next().unwrap().parse::<i32>().unwrap(),
@@ -21,7 +21,7 @@ fn part1(input: &str) -> i32 {
 fn part2(input: &str) -> i32 {
     input
         .lines()
-        .map(|line| line.split("x"))
+        .map(|line| line.split('x'))
         .map(|mut parts| {
             (
                 parts.next().unwrap().parse::<i32>().unwrap(),
