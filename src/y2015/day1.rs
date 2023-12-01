@@ -4,12 +4,11 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> i32 {
-    input.chars()
-        .fold(0, |sum, c| match c {
-            '(' => sum + 1,
-            ')' => sum - 1,
-            _ => sum
-        })
+    input.chars().fold(0, |sum, c| match c {
+        '(' => sum + 1,
+        ')' => sum - 1,
+        _ => sum,
+    })
 }
 
 fn part2(input: &str) -> i32 {
@@ -52,10 +51,7 @@ mod tests {
 
     #[test]
     fn part_2() {
-        let input = vec![
-            (")", 1),
-            ("()())", 5)
-        ];
+        let input = vec![(")", 1), ("()())", 5)];
         for (input, expected) in input {
             let result = part2(input);
             assert_eq!(expected, result);

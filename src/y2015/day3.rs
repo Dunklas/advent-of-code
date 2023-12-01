@@ -6,9 +6,8 @@ pub fn solve(input: &str) {
 }
 
 fn part2(input: &str) -> u32 {
-    let (santa, robot): (Vec<_>, Vec<_>) = input.chars()
-        .enumerate()
-        .partition(|(i, _c)| i % 2 == 0);
+    let (santa, robot): (Vec<_>, Vec<_>) =
+        input.chars().enumerate().partition(|(i, _c)| i % 2 == 0);
     deliver_presents(santa.into_iter().map(|(_i, c)| c))
         .union(&deliver_presents(robot.into_iter().map(|(_i, c)| c)))
         .count() as u32
@@ -19,9 +18,10 @@ fn part1(input: &str) -> u32 {
 }
 
 fn deliver_presents<I>(instructions: I) -> HashSet<(i32, i32)>
-    where I: Iterator<Item = char> {
-    let mut visited = vec![(0, 0)].into_iter()
-        .collect::<HashSet<(i32, i32)>>();
+where
+    I: Iterator<Item = char>,
+{
+    let mut visited = vec![(0, 0)].into_iter().collect::<HashSet<(i32, i32)>>();
     let mut pos = (0, 0);
     for c in instructions {
         match c {
