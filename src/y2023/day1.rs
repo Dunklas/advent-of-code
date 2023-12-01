@@ -4,7 +4,17 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> i32 {
-    0
+    input.lines()
+        .map(|line| {
+            let mut x = line.chars()
+                .filter(|c| c.is_numeric());
+            let first = x.next();
+            let last = x.last();
+            let b = format!("{}{}", first.unwrap().to_string(), last.unwrap_or(first.unwrap()));
+            return b;
+        })
+        .flat_map(|x| x.parse::<i32>())
+        .sum()
 }
 
 fn part2(input: &str) -> i32 {
@@ -17,7 +27,11 @@ mod tests {
 
     #[test]
     fn part_1() {
-
+        let input = "1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet";
+        assert_eq!(142, part1(input));
     }
 
     #[test]
