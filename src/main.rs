@@ -52,7 +52,7 @@ fn main() {
             }
             "4" => {
                 y2023::day4::solve(&input);
-            },
+            }
             "5" => {
                 y2023::day5::solve(&input);
             }
