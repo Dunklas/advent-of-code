@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{ops::Range, collections::HashSet};
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -29,23 +29,15 @@ fn part1(input: &str) -> u64 {
 
 fn part2(input: &str) -> u64 {
     let (seed_ranges, resource_maps) = parse(input);
-    let mut lowest = u64::MAX;
-    for raw_range in seed_ranges.chunks(2) {
-        let range = Range {
-            start: raw_range[0],
-            end: raw_range[0] + raw_range[1],
-        };
-        for seed in range {
-            let mut resource_id = seed;
-            for resource_map in resource_maps.iter() {
-                resource_id = next(&resource_id, resource_map);
-            }
-            if resource_id < lowest {
-                lowest = resource_id;
-            }
-        }
-    }
-    lowest
+    tmp(&resource_maps);
+    0
+}
+
+fn tmp(map: &Vec<ResourceMap>) {
+    let mut prev: Option<&(Range<u64>, Range<u64>)> = None;
+    let mut x = map.iter().rev();
+    let lowest_location = x.next().unwrap().ranges.iter().min_by(|a, b| a.1.start.cmp(&b.1.start)).unwrap();
+    // Iterate backwards, find overlapping ranges to reduce search space?
 }
 
 fn next(id: &u64, resource_map: &ResourceMap) -> u64 {
