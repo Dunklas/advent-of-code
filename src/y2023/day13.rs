@@ -14,6 +14,10 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str, multiplier: usize) -> usize {
+    let patterns = parse(input);
+    let mut sum = 0;
+    for pattern in patterns.iter() {
+    }
     0
 }
 
