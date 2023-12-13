@@ -5,42 +5,54 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let patterns = parse(input);
+    let mut sum = 0;
     for pattern in patterns.iter() {
-        x(&pattern);
+        let res = x(&pattern);
+        sum += res;
     }
-    0
+    sum
 }
 
 fn part2(input: &str, multiplier: usize) -> usize {
     0
 }
 
-fn x(pattern: &String) -> String {
+fn x(pattern: &String) -> usize {
     let lines = pattern.lines().collect::<Vec<_>>();
-    if is_foldable_vertical(&lines, lines[0].len() / 2) || is_foldable_vertical(&lines, lines[0].len() / 2 + 1) {
-        println!("Vertical!");
+    for v in 1..lines[0].len() {
+        if let Some(i) = is_foldable_vertical(&lines, v) {
+            return i;
+        }
     }
-    if is_foldable_horizontal(&lines, lines.len() / 2) || is_foldable_horizontal(&lines, lines.len() / 2 + 1) {
-        println!("Horizontal!");
+    for h in 1..lines.len() {
+        if let Some(i) = is_foldable_horizontal(&lines, h) {
+            return i * 100;
+        }
     }
-    String::new()
+    0
 }
 
-fn is_foldable_vertical(lines: &Vec<&str>, i: usize) -> bool {
+fn is_foldable_vertical(lines: &Vec<&str>, i: usize) -> Option<usize> {
     let len = i.abs_diff(0).min(lines[0].len().abs_diff(i));
-    lines
+    match lines
         .iter()
         .map(|line| (&line[i-len..i], &line[i..i+len]))
-        .all(|(p1, p2)| p1.chars().zip(p2.chars().rev()).all(|(a, b)| a == b))
+        .all(|(p1, p2)| p1.chars().zip(p2.chars().rev()).all(|(a, b)| a == b)) {
+            true => Some(i),
+            false => None
+        }
 }
 
-fn is_foldable_horizontal(lines: &Vec<&str>, i: usize) -> bool {
+fn is_foldable_horizontal(lines: &Vec<&str>, i: usize) -> Option<usize> {
     let len = i.abs_diff(0).min(lines.len().abs_diff(i));
     let p1 = &lines[i-len..i];
     let p2 = &lines[i..i+len];
 
-    p1.iter().zip(p2.iter().rev())
-        .all(|(a, b)| **a == **b)
+    match p1.iter().zip(p2.iter().rev())
+        .all(|(a, b)| **a == **b) {
+            true => Some(i),
+            false => None
+        }
 }
 
 fn parse(input: &str) -> Vec<String> {
