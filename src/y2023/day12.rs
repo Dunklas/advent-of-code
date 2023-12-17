@@ -4,11 +4,30 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
+    let x = parse(input);
+    println!("{:?}", x);
     0
 }
 
 fn part2(input: &str) -> usize {
     0
+}
+
+fn parse(input: &str) -> Vec<(String, Vec<u8>)> {
+    input
+        .lines()
+        .filter_map(|line| line.split_once(' '))
+        .map(|(row, conditions)| {
+            (
+                row.to_owned(),
+                conditions
+                    .split(',')
+                    .into_iter()
+                    .map(|n| n.parse::<u8>().unwrap())
+                    .collect(),
+            )
+        })
+        .collect()
 }
 
 #[cfg(test)]
