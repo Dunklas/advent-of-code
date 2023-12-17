@@ -27,9 +27,6 @@ fn solve_row(row: String, conditions: &Vec<u8>) -> usize {
 }
 
 fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
-    if row.contains('?') {
-        return true;
-    }
     let mut iter = row.chars();
     let mut condition_iter = conditions.iter();
     let mut prev_state = None;
@@ -38,7 +35,9 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
         let current_state = match next {
             '#' => State::Damaged,
             '.' => State::Operational,
-            '?' => State::Unknown,
+            '?' => {
+                return true;
+            }
             _ => panic!("Unexpected char"),
         };
         if let Some(prev) = prev_state {
@@ -46,10 +45,10 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
                 if prev == State::Damaged {
                     match condition_iter.next() {
                         Some(condition) => {
-                        if state_len != *condition {
-                            return false;
+                            if state_len != *condition {
+                                return false;
+                            }
                         }
-                        },
                         None => {
                             return false;
                         }
@@ -62,14 +61,13 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
         state_len += 1;
     }
     if let Some(prev) = prev_state {
-        // A last state change
         if prev == State::Damaged {
             match condition_iter.next() {
                 Some(condition) => {
-                if state_len > *condition {
-                    return false;
+                    if state_len > *condition {
+                        return false;
+                    }
                 }
-                },
                 None => {
                     return false;
                 }
@@ -78,7 +76,7 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
     }
     match condition_iter.next() {
         None => true,
-        _ => false
+        _ => false,
     }
 }
 
