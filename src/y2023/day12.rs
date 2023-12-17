@@ -5,10 +5,9 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let x = parse(input);
-    let (row, conditions) = x.first().unwrap();
-    is_valid(row, conditions);
-    solve_row(row.clone(), conditions);
-    0
+    x.into_iter()
+        .map(|(row, conditions)| solve_row(row, &conditions))
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
@@ -16,7 +15,11 @@ fn part2(input: &str) -> usize {
 }
 
 fn solve_row(row: String, conditions: &Vec<u8>) -> usize {
+    if !is_valid(&row, conditions) {
+        return 0;
+    }
     if !row.contains('?') {
+        println!("{:?}", row);
         return 1;
     }
     solve_row(row.replacen('?', ".", 1), conditions)
@@ -24,8 +27,11 @@ fn solve_row(row: String, conditions: &Vec<u8>) -> usize {
 }
 
 fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
+    if row.contains('?') {
+        return true;
+    }
     let mut iter = row.chars();
-    let mut states: Vec<(State, u8)> = Vec::new();
+    let mut condition_iter = conditions.iter();
     let mut prev_state = None;
     let mut state_len = 0;
     while let Some(next) = iter.next() {
@@ -33,11 +39,22 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
             '#' => State::Damaged,
             '.' => State::Operational,
             '?' => State::Unknown,
-            _ => panic!("Unexpected char")
+            _ => panic!("Unexpected char"),
         };
         if let Some(prev) = prev_state {
             if prev != current_state {
-                states.push((prev, state_len));
+                if prev == State::Damaged {
+                    match condition_iter.next() {
+                        Some(condition) => {
+                        if state_len != *condition {
+                            return false;
+                        }
+                        },
+                        None => {
+                            return false;
+                        }
+                    }
+                }
                 state_len = 0;
             }
         }
@@ -45,15 +62,24 @@ fn is_valid(row: &str, conditions: &Vec<u8>) -> bool {
         state_len += 1;
     }
     if let Some(prev) = prev_state {
-        states.push((prev, state_len));
+        // A last state change
+        if prev == State::Damaged {
+            match condition_iter.next() {
+                Some(condition) => {
+                if state_len > *condition {
+                    return false;
+                }
+                },
+                None => {
+                    return false;
+                }
+            }
+        }
     }
-
-    for condition in conditions {
-
+    match condition_iter.next() {
+        None => true,
+        _ => false
     }
-
-    println!("{:?}", states);
-    true
 }
 
 fn parse(input: &str) -> Vec<(String, Vec<u8>)> {
@@ -77,7 +103,7 @@ fn parse(input: &str) -> Vec<(String, Vec<u8>)> {
 enum State {
     Unknown,
     Damaged,
-    Operational
+    Operational,
 }
 
 #[cfg(test)]
