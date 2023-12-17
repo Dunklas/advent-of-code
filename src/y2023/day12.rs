@@ -15,8 +15,14 @@ fn part2(input: &str) -> usize {
 mod tests {
     use super::*;
 
+    #[test]
     fn test_part1() {
-        let input = "";
-        assert_eq!(part1(input), 0);
+        let input = "???.### 1,1,3
+.??..??...?##. 1,1,3
+?#?#?#?#?#?#?#? 1,3,1,6
+????.#...#... 4,1,1
+????.######..#####. 1,6,5
+?###???????? 3,2,1";
+        assert_eq!(part1(input), 21);
     }
 }
