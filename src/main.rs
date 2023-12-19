@@ -80,6 +80,9 @@ fn main() {
             "14" => {
                 y2023::day14::solve(&input);
             }
+            "15" => {
+                y2023::day15::solve(&input);
+            }
             _ => {
                 panic!("Solution does not exist for {} {}", year, day);
             }
