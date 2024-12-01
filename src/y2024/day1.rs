@@ -7,25 +7,24 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let (first, second) = parse(input).unwrap();
-    first.iter().zip(second.iter())
+    first
+        .iter()
+        .zip(second.iter())
         .map(|(a, b)| a.abs_diff(*b))
         .sum()
 }
 
 fn part2(input: &str) -> usize {
     let (first, second) = parse(input).unwrap();
-    first.iter()
-        .map(|n| {
-            second.iter().filter(|n2| n == *n2).count() * n
-        })
+    first
+        .iter()
+        .map(|n| second.iter().filter(|n2| n == *n2).count() * n)
         .sum()
 }
 
 fn parse(input: &str) -> Result<(Vec<usize>, Vec<usize>), Box<dyn Error>> {
-    let mut first = Vec::new();
-    let mut second = Vec::new();
-
-    input.lines()
+    let (mut first, mut second): (Vec<usize>, Vec<usize>) = input
+        .lines()
         .filter_map(|line| {
             let mut parts = line.split_whitespace();
             Some((
@@ -33,14 +32,9 @@ fn parse(input: &str) -> Result<(Vec<usize>, Vec<usize>), Box<dyn Error>> {
                 parts.next()?.parse::<usize>().ok()?,
             ))
         })
-        .for_each(|(f, s)| {
-            first.push(f);
-            second.push(s);
-        });
-
+        .unzip();
     first.sort_unstable();
     second.sort_unstable();
-
     Ok((first, second))
 }
 
