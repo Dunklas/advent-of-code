@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::error::Error;
 
 pub fn solve(input: &str) {
@@ -16,10 +17,11 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let (first, second) = parse(input).unwrap();
-    first
-        .iter()
-        .map(|n| second.iter().filter(|n2| n == *n2).count() * n)
-        .sum()
+    let counts = second.into_iter().fold(HashMap::new(), |mut acc, n| {
+        *acc.entry(n).or_insert_with(|| 0) += 1;
+        acc
+    });
+    first.iter().map(|n| counts.get(n).unwrap_or(&0) * n).sum()
 }
 
 fn parse(input: &str) -> Result<(Vec<usize>, Vec<usize>), Box<dyn Error>> {
