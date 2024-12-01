@@ -33,7 +33,7 @@ fn part2(input: &str) -> u64 {
     total_load(&map)
 }
 
-fn tilt(map: &mut Vec<Vec<char>>) {
+fn tilt(map: &mut [Vec<char>]) {
     for x in 0..map[0].len() {
         for y in 0..map.len() {
             if map[y][x] != 'O' {

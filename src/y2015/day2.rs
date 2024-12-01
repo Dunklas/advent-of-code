@@ -35,14 +35,14 @@ fn part2(input: &str) -> i32 {
 
 fn packaging(l: i32, w: i32, h: i32) -> i32 {
     let sum = 2 * l * w + 2 * w * h + 2 * h * l;
-    let mut all = vec![l, w, h];
+    let mut all = [l, w, h];
     all.sort();
     let extra = all[0] * all[1];
     sum + extra
 }
 
 fn ribbon(l: i32, w: i32, h: i32) -> i32 {
-    let mut all = vec![l, w, h];
+    let mut all = [l, w, h];
     all.sort();
     let ribbon_len = all[0] * 2 + all[1] * 2;
     let bow: i32 = all.iter().product();

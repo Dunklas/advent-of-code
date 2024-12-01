@@ -56,7 +56,7 @@ fn planet_positions(universe: &[Vec<char>]) -> Vec<(usize, usize)> {
         .collect()
 }
 
-fn expansion_points(universe: &Vec<Vec<char>>) -> (Vec<usize>, Vec<usize>) {
+fn expansion_points(universe: &[Vec<char>]) -> (Vec<usize>, Vec<usize>) {
     let mut rows = Vec::<usize>::new();
     for (y, row) in universe.iter().enumerate() {
         if row.iter().all(|tile| *tile != '#') {
