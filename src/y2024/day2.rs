@@ -1,63 +1,71 @@
-use itertools::Itertools;
-
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
     println!("Part 2: {}", part2(input));
 }
 
 fn part1(input: &str) -> usize {
-    let levels = parse(input);
-    levels.into_iter()
-        .filter(|report| is_safe(report))
+    parse(input)
+        .into_iter()
+        .filter(|report| report.is_safe())
         .count()
 }
 fn part2(input: &str) -> usize {
-    let levels = parse(input);
-    let mut safe_count = 0;
-    for level in levels {
-        if is_safe(&level) {
-            safe_count += 1;
-            continue;
-        }
+    parse(input)
+        .into_iter()
+        .filter(|report| report.is_safe_problem_dampened())
+        .count()
+}
 
-        let skipped: Vec<Vec<usize>> = (0..level.len())
+struct Report {
+    levels: Vec<usize>,
+}
+
+impl Report {
+    fn is_safe(&self) -> bool {
+        is_safe_increasing(&self.levels) || is_safe_increasing(&reversed(&self.levels))
+    }
+
+    fn is_safe_problem_dampened(&self) -> bool {
+        if self.is_safe() {
+            return true;
+        }
+        (0..self.levels.len())
             .map(|i| {
-                level.iter()
+                self.levels
+                    .iter()
                     .enumerate()
                     .filter(|&(index, _)| index != i)
                     .map(|(_, &value)| value)
-                    .collect()
+                    .collect::<Vec<_>>()
             })
-            .collect();
-
-        if skipped.into_iter().any(|r| is_safe(&r)) {
-           safe_count += 1;
-        }
+            .any(|r| is_safe_increasing(&r) || is_safe_increasing(&reversed(&r)))
     }
-    safe_count
 }
 
-fn is_safe(report: &Vec<usize>) -> bool {
-    let mut x = report.clone();
-    x.sort_unstable();
-    let y = x.iter().cloned().rev().collect::<Vec<usize>>();
-    if x != *report && y != *report {
-        return false;
-    }
-    for pair in report.windows(2) {
-        let diff = pair[0].abs_diff(pair[1]);
-        if diff == 0 || diff > 3 {
-            return false;
+impl From<&str> for Report {
+    fn from(value: &str) -> Self {
+        Self {
+            levels: value
+                .split_whitespace()
+                .map(|v| v.parse().unwrap())
+                .collect(),
         }
     }
-    println!("SAFE: {:?}", report);
-    true
 }
 
-fn parse(input: &str) -> Vec<Vec<usize>> {
-    input.lines()
-        .map(|line| line.split_whitespace().map(|value| value.parse().unwrap()).collect())
-        .collect()
+fn is_safe_increasing(input: &[usize]) -> bool {
+    !input
+        .windows(2)
+        .map(|pair| pair[0] as isize - pair[1] as isize)
+        .any(|diff| diff.is_positive() || diff == 0 || diff < -3)
+}
+
+fn reversed(report: &[usize]) -> Vec<usize> {
+    report.iter().rev().copied().collect()
+}
+
+fn parse(input: &str) -> Vec<Report> {
+    input.lines().map(Report::from).collect()
 }
 
 #[cfg(test)]
