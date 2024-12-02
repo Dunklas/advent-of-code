@@ -12,19 +12,39 @@ fn part1(input: &str) -> usize {
         .count()
 }
 fn part2(input: &str) -> usize {
-    0
+    let levels = parse(input);
+    let mut safe_count = 0;
+    for level in levels {
+        if is_safe(&level) {
+            safe_count += 1;
+            continue;
+        }
+
+        let skipped: Vec<Vec<usize>> = (0..level.len())
+            .map(|i| {
+                level.iter()
+                    .enumerate()
+                    .filter(|&(index, _)| index != i)
+                    .map(|(_, &value)| value)
+                    .collect()
+            })
+            .collect();
+
+        if skipped.into_iter().any(|r| is_safe(&r)) {
+           safe_count += 1;
+        }
+    }
+    safe_count
 }
 
 fn is_safe(report: &Vec<usize>) -> bool {
     let mut x = report.clone();
     x.sort_unstable();
     let y = x.iter().cloned().rev().collect::<Vec<usize>>();
-    println!("{:?}, {:?}, {:?}", report, &x, &y);
     if x != *report && y != *report {
         return false;
     }
     for pair in report.windows(2) {
-        println!("{:?}, {:?}", pair[0], pair[1]);
         let diff = pair[0].abs_diff(pair[1]);
         if diff == 0 || diff > 3 {
             return false;
@@ -57,7 +77,12 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        let input = "";
-        assert_eq!(part2(input), 0);
+        let input = "7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9";
+        assert_eq!(part2(input), 4);
     }
 }
