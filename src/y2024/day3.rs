@@ -14,10 +14,12 @@ pub fn solve(input: &str) {
 fn part1(input: &str) -> usize {
     MUL.captures_iter(input).into_iter()
         .map(|m| m.get(1).unwrap().as_str().parse::<usize>().unwrap() * m.get(2).unwrap().as_str().parse::<usize>().unwrap())
-        .sum()
+        .sum::<usize>()
 }
 
 fn part2(input: &str) -> usize {
+    let x = find_all(input);
+    println!("{:?}", x);
     let mut enabled = true;
     let mut result = 0;
     let c = ALL.captures_iter(input).into_iter().for_each(|m| {
@@ -42,9 +44,29 @@ fn part2(input: &str) -> usize {
     result
 }
 
+fn find_all(input: &str) -> Vec<Instruction> {
+    ALL.find_iter(input).filter_map(|m| match MUL.captures(m.as_str()) {
+        Some(cap) => Some(Instruction::MUL(cap.get(1).unwrap().as_str().parse().unwrap(), cap.get(2).unwrap().as_str().parse().unwrap())),
+        None => {
+            match m.as_str() {
+                "do()" => Some(Instruction::DO),
+                "don't()" => Some(Instruction::DONT),
+                _ => None
+            }
+        }
+    }).collect()
+}
+
+#[derive(Debug)]
+enum Instruction {
+    MUL(usize, usize),
+    DO,
+    DONT
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::y2024::day3::{part1, part2};
+    use crate::y2024::day3::{find_all, part1, part2};
 
     #[test]
     fn test_part1() {
