@@ -14,41 +14,40 @@ pub fn solve(input: &str) {
 fn part1(input: &str) -> usize {
     find_all(input).into_iter()
         .map(|instruction| match instruction {
-            Instruction::MUL(a, b) => a * b,
+            Instruction::Multiply(a, b) => a * b,
             _ => 0
         })
         .sum()
 }
 
 fn part2(input: &str) -> usize {
-    let instructions = find_all(input);
     let mut enabled = true;
     let mut result = 0;
-    for instruction in instructions {
+    find_all(input).into_iter().for_each(|instruction| {
         match instruction {
-            Instruction::MUL(a, b) => {
+            Instruction::Multiply(a, b) => {
                 if enabled {
                     result += a * b;
                 }
             },
-            Instruction::DO => {
+            Instruction::Do => {
                 enabled = true;
             }
-            Instruction::DONT => {
+            Instruction::DoNot => {
                 enabled = false;
             }
         }
-    }
+    });
     result
 }
 
 fn find_all(input: &str) -> Vec<Instruction> {
     ALL.find_iter(input).filter_map(|m| match MUL.captures(m.as_str()) {
-        Some(cap) => Some(Instruction::MUL(cap.get(1).unwrap().as_str().parse().unwrap(), cap.get(2).unwrap().as_str().parse().unwrap())),
+        Some(cap) => Some(Instruction::Multiply(cap.get(1).unwrap().as_str().parse().unwrap(), cap.get(2).unwrap().as_str().parse().unwrap())),
         None => {
             match m.as_str() {
-                "do()" => Some(Instruction::DO),
-                "don't()" => Some(Instruction::DONT),
+                "do()" => Some(Instruction::Do),
+                "don't()" => Some(Instruction::DoNot),
                 _ => None
             }
         }
@@ -57,14 +56,14 @@ fn find_all(input: &str) -> Vec<Instruction> {
 
 #[derive(Debug)]
 enum Instruction {
-    MUL(usize, usize),
-    DO,
-    DONT
+    Multiply(usize, usize),
+    Do,
+    DoNot
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::y2024::day3::{find_all, part1, part2};
+    use crate::y2024::day3::{part1, part2};
 
     #[test]
     fn test_part1() {
