@@ -3,7 +3,8 @@ use regex::Regex;
 
 lazy_static! {
     static ref MUL: Regex = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
-    static ref ALL: Regex = Regex::new(r"(mul\((\d{1,3}),(\d{1,3})\))|(do\(\))|(don't\(\))").unwrap();
+    static ref ALL: Regex =
+        Regex::new(r"(mul\((\d{1,3}),(\d{1,3})\))|(do\(\))|(don't\(\))").unwrap();
 }
 
 pub fn solve(input: &str) {
@@ -12,10 +13,11 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
-    find_all(input).into_iter()
+    find_all(input)
+        .into_iter()
         .map(|instruction| match instruction {
             Instruction::Multiply(a, b) => a * b,
-            _ => 0
+            _ => 0,
         })
         .sum()
 }
@@ -23,42 +25,52 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let mut enabled = true;
     let mut result = 0;
-    find_all(input).into_iter().for_each(|instruction| {
-        match instruction {
+    find_all(input)
+        .into_iter()
+        .for_each(|instruction| match instruction {
             Instruction::Multiply(a, b) => {
                 if enabled {
                     result += a * b;
                 }
-            },
+            }
             Instruction::Do => {
                 enabled = true;
             }
             Instruction::DoNot => {
                 enabled = false;
             }
-        }
-    });
+        });
     result
 }
 
 fn find_all(input: &str) -> Vec<Instruction> {
-    ALL.find_iter(input).filter_map(|m| match MUL.captures(m.as_str()) {
-        Some(cap) => Some(Instruction::Multiply(cap.get(1).unwrap().as_str().parse().unwrap(), cap.get(2).unwrap().as_str().parse().unwrap())),
-        None => {
-            match m.as_str() {
-                "do()" => Some(Instruction::Do),
-                "don't()" => Some(Instruction::DoNot),
-                _ => None
-            }
-        }
-    }).collect()
+    ALL.find_iter(input)
+        .map(|m| m.as_str())
+        .filter_map(Instruction::from_str)
+        .collect()
 }
 
 #[derive(Debug)]
 enum Instruction {
     Multiply(usize, usize),
     Do,
-    DoNot
+    DoNot,
+}
+
+impl Instruction {
+    pub fn from_str(value: &str) -> Option<Instruction> {
+        match MUL.captures(value) {
+            Some(cap) => Some(Instruction::Multiply(
+                cap.get(1)?.as_str().parse().ok()?,
+                cap.get(2)?.as_str().parse().ok()?,
+            )),
+            None => match value {
+                "do()" => Some(Instruction::Do),
+                "don't()" => Some(Instruction::DoNot),
+                _ => None,
+            },
+        }
+    }
 }
 
 #[cfg(test)]
