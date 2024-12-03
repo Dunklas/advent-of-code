@@ -12,35 +12,33 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
-    MUL.captures_iter(input).into_iter()
-        .map(|m| m.get(1).unwrap().as_str().parse::<usize>().unwrap() * m.get(2).unwrap().as_str().parse::<usize>().unwrap())
-        .sum::<usize>()
+    find_all(input).into_iter()
+        .map(|instruction| match instruction {
+            Instruction::MUL(a, b) => a * b,
+            _ => 0
+        })
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
-    let x = find_all(input);
-    println!("{:?}", x);
+    let instructions = find_all(input);
     let mut enabled = true;
     let mut result = 0;
-    let c = ALL.captures_iter(input).into_iter().for_each(|m| {
-        match m.get(0) {
-            Some(m) => {
-                let ins = m.as_str();
-                if let(Some(x)) = MUL.captures(ins) {
-                    if enabled {
-                        result += (x.get(1).unwrap().as_str().parse::<usize>().unwrap() * x.get(2).unwrap().as_str().parse::<usize>().unwrap());
-                    }
+    for instruction in instructions {
+        match instruction {
+            Instruction::MUL(a, b) => {
+                if enabled {
+                    result += a * b;
                 }
-                if ins == "do()" {
-                    enabled = true;
-                }
-                if ins == "don't()" {
-                   enabled = false;
-                }
+            },
+            Instruction::DO => {
+                enabled = true;
             }
-            None => {}
+            Instruction::DONT => {
+                enabled = false;
+            }
         }
-    });
+    }
     result
 }
 
