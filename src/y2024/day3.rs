@@ -4,7 +4,7 @@ use regex::Regex;
 lazy_static! {
     static ref MUL: Regex = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
     static ref ALL: Regex =
-        Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)").unwrap();
+        Regex::new(r"mul\(\d{1,3},\d{1,3}\)|do(?:n't)?\(\)").unwrap();
 }
 
 pub fn solve(input: &str) {
