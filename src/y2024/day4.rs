@@ -16,7 +16,46 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let grid = parse(input);
+
+    let mut count = 0;
+    for y in 0..grid.len() {
+        for x in 0..grid[y].len() {
+            if x_mas(y, x, &grid) {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
+fn x_mas(y: usize, x: usize, grid: &Vec<Vec<char>>) -> bool {
+    if grid[y][x] != 'A' {
+        return false;
+    }
+    if x == 0 || x == grid[y].len() - 1 {
+        return false;
+    }
+    if y == 0 || y == grid.len() - 1 {
+        return false;
+    }
+    let mut first_dir_ok = false;
+    if grid[y-1][x-1] == 'M' && grid[y+1][x+1] == 'S' {
+        first_dir_ok = true;
+    }
+    if grid[y-1][x-1] == 'S' && grid[y+1][x+1] == 'M' {
+        first_dir_ok = true;
+    }
+
+    let mut second_dir_ok = false;
+    if grid[y-1][x+1] == 'M' && grid[y+1][x-1] == 'S' {
+        second_dir_ok = true;
+    }
+    if grid[y-1][x+1] == 'S' && grid[y+1][x-1] == 'M' {
+        second_dir_ok = true;
+    }
+
+    first_dir_ok && second_dir_ok
 }
 
 fn hit(y: usize, x: usize, grid: &Vec<Vec<char>>) -> usize {
@@ -77,7 +116,7 @@ fn parse(input: &str) -> Vec<Vec<char>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::y2024::day4::part1;
+    use crate::y2024::day4::{part1, part2};
 
     #[test]
     fn test_small() {
@@ -106,7 +145,16 @@ MXMXAXMASX";
 
     #[test]
     fn test_part2() {
-        let input = "";
-        assert_eq!(part1(input), 0);
+        let input = ".M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+..........";
+        assert_eq!(part2(input), 9);
     }
 }
