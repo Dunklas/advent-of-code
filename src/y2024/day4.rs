@@ -102,7 +102,7 @@ impl From<&str> for Grid {
         Self {
             grid: value
                 .lines()
-                .map(|line| line.chars().into_iter().collect::<Vec<_>>())
+                .map(|line| line.chars().collect::<Vec<_>>())
                 .collect(),
         }
     }
