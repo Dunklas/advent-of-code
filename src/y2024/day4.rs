@@ -34,48 +34,11 @@ fn hit(y: usize, x: usize, grid: &Vec<Vec<char>>) -> bool {
             return true;
         }
     }
-    // Vertical
-    if y > 2 {
-        if grid[y - 3][x] == 'X' && grid[y - 2][x] == 'M' && grid[y - 1][x] == 'A' && grid[y][x] == 'S' {
-           return true;
-        }
-        if grid[y - 3][x] == 'S' && grid[y - 2][x] == 'A' && grid[y - 1][x] == 'M' && grid[y][x] == 'X' {
+    if y + 3 < grid.len() {
+        if grid[y][x] == 'X' && grid[y+1][x] == 'M' && grid[y+2][x] == 'A' && grid[y+3][x] == 'S' {
             return true;
         }
-    }
-    // Top left
-    if y > 2 && x > 2 {
-        if grid[y][x] == 'X' && grid[y-1][x-1] == 'M' && grid[y-2][x-2] == 'A' && grid[y-3][x-3] == 'S' {
-            return true;
-        }
-        if grid[y][x] == 'S' && grid[y-1][x-1] == 'A' && grid[y-2][x-2] == 'M' && grid[y-3][x-3] == 'X' {
-            return true;
-        }
-    }
-    // Top right
-    if y > 2 && x + 3 < grid[y].len() {
-        if grid[y][x] == 'X' && grid[y-1][x+1] == 'M' && grid[y-2][x+2] == 'A' && grid[y-3][x+3] == 'S' {
-            return true;
-        }
-        if grid[y][x] == 'S' && grid[y-1][x+1] == 'A' && grid[y-2][x+2] == 'M' && grid[y-3][x+3] == 'X' {
-            return true;
-        }
-    }
-    // Lower right
-    if y + 3 < grid.len() && x + 3 < grid[y].len() {
-        if grid[y][x] == 'X' && grid[y + 1][x + 1] == 'M' && grid[y + 2][x + 2] == 'A' && grid[y + 3][x + 3] == 'S' {
-            return true;
-        }
-        if grid[y][x] == 'S' && grid[y + 1][x + 1] == 'A' && grid[y + 2][x + 2] == 'M' && grid[y + 3][x + 3] == 'X' {
-            return true;
-        }
-    }
-    // Lower right
-    if y + 3 < grid.len() && x > 2 {
-        if grid[y][x] == 'X' && grid[y+1][x-1] == 'M' && grid[y+2][x-2] == 'A' && grid[y+3][x-3] == 'S' {
-            return true;
-        }
-        if grid[y][x] == 'S' && grid[y+1][x-1] == 'A' && grid[y+2][x-2] == 'M' && grid[y+3][x-3] == 'X' {
+        if grid[y][x] == 'S' && grid[y+1][x] == 'A' && grid[y+2][x] == 'M' && grid[y+3][x] == 'X' {
             return true;
         }
     }
@@ -92,6 +55,15 @@ fn parse(input: &str) -> Vec<Vec<char>> {
 mod tests {
     use crate::y2024::day4::part1;
 
+    #[test]
+    fn test_small() {
+        let input = "..X...
+.SAMX.
+.A..A.
+XMAS.S
+.X....";
+        assert_eq!(part1(input), 0);
+    }
     #[test]
     fn test_part1() {
         let input = "MMMSXXMASM
