@@ -3,25 +3,34 @@ pub fn solve(input: &str) {
     println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> usize {
-    let grid = parse(input);
+const XMAS: &[char] = &['X', 'M', 'A', 'S'];
+const SAMX: &[char] = &['S', 'A', 'M', 'X'];
+const MAS: &[char] = &['M', 'A', 'S'];
+const SAM: &[char] = &['S', 'A', 'M'];
+const DIRECTIONS: [(isize, isize); 4] = [(1, 0), (0, 1), (1, 1), (-1, 1)];
 
+fn part1(input: &str) -> usize {
+    let grid = Grid::from(input);
     let mut count = 0;
-    for y in 0..grid.len() {
-        for x in 0..grid[y].len() {
-            count += hit(y, x, &grid);
+    for y in 0..grid.y_len() {
+        for x in 0..grid.x_len() {
+            let pos = Pos::new(y, x);
+            count += DIRECTIONS
+                .iter()
+                .map(|(dx, dy)| grid.get_segment(&pos, *dx, *dy, 4))
+                .filter(|result| result == XMAS || result == SAMX)
+                .count();
         }
     }
     count
 }
 
 fn part2(input: &str) -> usize {
-    let grid = parse(input);
-
+    let grid = Grid::from(input);
     let mut count = 0;
-    for y in 0..grid.len() {
-        for x in 0..grid[y].len() {
-            if x_mas(y, x, &grid) {
+    for y in 1..grid.y_len() - 1 {
+        for x in 1..grid.x_len() - 1 {
+            if is_xmas(&grid, &Pos::new(y, x)) {
                 count += 1;
             }
         }
@@ -29,115 +38,17 @@ fn part2(input: &str) -> usize {
     count
 }
 
-fn x_mas(y: usize, x: usize, grid: &Vec<Vec<char>>) -> bool {
-    if grid[y][x] != 'A' {
+fn is_xmas(grid: &Grid, pos: &Pos) -> bool {
+    if grid.get(pos) != 'A' {
         return false;
     }
-    if x == 0 || x == grid[y].len() - 1 {
-        return false;
-    }
-    if y == 0 || y == grid.len() - 1 {
-        return false;
-    }
-    let mut first_dir_ok = false;
-    if grid[y - 1][x - 1] == 'M' && grid[y + 1][x + 1] == 'S' {
-        first_dir_ok = true;
-    }
-    if grid[y - 1][x - 1] == 'S' && grid[y + 1][x + 1] == 'M' {
-        first_dir_ok = true;
-    }
-
-    let mut second_dir_ok = false;
-    if grid[y - 1][x + 1] == 'M' && grid[y + 1][x - 1] == 'S' {
-        second_dir_ok = true;
-    }
-    if grid[y - 1][x + 1] == 'S' && grid[y + 1][x - 1] == 'M' {
-        second_dir_ok = true;
-    }
-
-    first_dir_ok && second_dir_ok
-}
-
-fn hit(y: usize, x: usize, grid: &Vec<Vec<char>>) -> usize {
-    let mut count = 0;
-    if grid[y][x] != 'X' && grid[y][x] != 'M' && grid[y][x] != 'A' && grid[y][x] != 'S' {
-        return 0;
-    }
-    // Horizontal
-    if x + 3 < grid[y].len() {
-        if grid[y][x] == 'X'
-            && grid[y][x + 1] == 'M'
-            && grid[y][x + 2] == 'A'
-            && grid[y][x + 3] == 'S'
-        {
-            count += 1;
-        }
-        if grid[y][x] == 'S'
-            && grid[y][x + 1] == 'A'
-            && grid[y][x + 2] == 'M'
-            && grid[y][x + 3] == 'X'
-        {
-            count += 1;
-        }
-    }
-    // Vertical
-    if y + 3 < grid.len() {
-        if grid[y][x] == 'X'
-            && grid[y + 1][x] == 'M'
-            && grid[y + 2][x] == 'A'
-            && grid[y + 3][x] == 'S'
-        {
-            count += 1;
-        }
-        if grid[y][x] == 'S'
-            && grid[y + 1][x] == 'A'
-            && grid[y + 2][x] == 'M'
-            && grid[y + 3][x] == 'X'
-        {
-            count += 1;
-        }
-    }
-
-    if x + 3 < grid[y].len() && y + 3 < grid.len() {
-        if grid[y][x] == 'X'
-            && grid[y + 1][x + 1] == 'M'
-            && grid[y + 2][x + 2] == 'A'
-            && grid[y + 3][x + 3] == 'S'
-        {
-            count += 1;
-        }
-    }
-
-    if x + 3 < grid[y].len() && y > 2 {
-        if grid[y][x] == 'X'
-            && grid[y - 1][x + 1] == 'M'
-            && grid[y - 2][x + 2] == 'A'
-            && grid[y - 3][x + 3] == 'S'
-        {
-            count += 1;
-        }
-    }
-
-    if x > 2 && y + 3 < grid.len() {
-        if grid[y][x] == 'X'
-            && grid[y + 1][x - 1] == 'M'
-            && grid[y + 2][x - 2] == 'A'
-            && grid[y + 3][x - 3] == 'S'
-        {
-            count += 1;
-        }
-    }
-
-    if x > 2 && y > 2 {
-        if grid[y][x] == 'X'
-            && grid[y - 1][x - 1] == 'M'
-            && grid[y - 2][x - 2] == 'A'
-            && grid[y - 3][x - 3] == 'S'
-        {
-            count += 1;
-        }
-    }
-    count
+    vec![
+        (Pos::new(pos.y - 1, pos.x - 1), 1, 1),
+        (Pos::new(pos.y - 1, pos.x + 1), -1, 1),
+    ]
+    .into_iter()
+    .map(|(pos, dx, dy)| grid.get_segment(&pos, dx, dy, 3))
+    .all(|result| result == MAS || result == SAM)
 }
 
 struct Grid {
@@ -149,8 +60,18 @@ struct Pos {
     x: usize,
 }
 
+impl Pos {
+    fn new(y: usize, x: usize) -> Pos {
+        Self { y, x }
+    }
+}
+
 impl Grid {
-    fn get(&self, start: &Pos, dx: usize, dy: usize, range: usize) -> Vec<&char> {
+    fn get(&self, pos: &Pos) -> char {
+        self.grid[pos.y][pos.x]
+    }
+
+    fn get_segment(&self, start: &Pos, dx: isize, dy: isize, range: usize) -> Vec<char> {
         let mut result = Vec::new();
         let mut current_x = start.x;
         let mut current_y = start.y;
@@ -160,11 +81,19 @@ impl Grid {
                 break;
             }
             result.push(&self.grid[current_y][current_x]);
-            current_x = current_x.saturating_add(dx);
-            current_y = current_y.saturating_add(dy);
+            current_x = (current_x as isize + dx) as usize;
+            current_y = (current_y as isize + dy) as usize;
         }
 
-        result
+        result.into_iter().copied().collect()
+    }
+
+    fn y_len(&self) -> usize {
+        self.grid.len()
+    }
+
+    fn x_len(&self) -> usize {
+        self.grid[0].len()
     }
 }
 
@@ -177,13 +106,6 @@ impl From<&str> for Grid {
                 .collect(),
         }
     }
-}
-
-fn parse(input: &str) -> Vec<Vec<char>> {
-    input
-        .lines()
-        .map(|line| line.chars().into_iter().collect::<Vec<char>>())
-        .collect()
 }
 
 #[cfg(test)]
