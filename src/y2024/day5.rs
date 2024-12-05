@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::ops::Index;
 
 pub fn solve(input: &str) {
@@ -26,7 +27,7 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let (page_orderings, updates) = parse(input);
-    let incorrect = updates
+    let mut incorrect = updates
         .into_iter()
         .filter(|update| {
             page_orderings
@@ -39,8 +40,17 @@ fn part2(input: &str) -> usize {
                 .any(|(left, right)| left >= right)
         })
         .collect::<Vec<_>>();
-    println!("{:?}", incorrect);
-    0
+    for mut update in incorrect.iter_mut() {
+        update.sort_by(|a, b| {
+            match page_orderings.iter().find(|(left, right)| left == b && right == a) {
+                Some(_) => Ordering::Greater,
+                _ => Ordering::Less,
+            }
+        })
+    }
+    incorrect.iter()
+        .map(|correct_update| correct_update[(correct_update.len() - 1) / 2])
+        .sum()
 }
 
 fn parse(input: &str) -> (Vec<(usize, usize)>, Vec<Vec<usize>>) {
