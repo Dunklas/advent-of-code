@@ -1,4 +1,9 @@
+use crate::util::coordinate::Coordinate;
+use crate::util::dir::Direction;
+use crate::util::grid::Grid;
 use std::collections::HashSet;
+use std::str::FromStr;
+use crate::y2024::day6::Movement::{Rotate, Stopped};
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
@@ -6,159 +11,107 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
-    let map = parse(input);
-    let mut pos = None;
-    let mut dir = (0isize, 0isize);
-
-    for y in 0..map.len() {
-        for x in 0..map[y].len() {
-            if map[y][x] == '^' {
-                pos = Some((y as isize, x as isize));
-                dir.0 = -1;
-            }
-        }
-    }
-    simulate_walk(&map, pos.unwrap(), dir)
+    let grid = Grid::<char>::from_str(input).unwrap();
+    let guard = Guard::new(grid.find(&'^').unwrap(), Direction::new(-1, 0));
+    let visited = find_path(&grid, guard);
+    visited.len()
 }
-fn part2(input: &str) -> usize {
-    let map = parse(input);
-    let mut pos = None;
-    let mut dir = (0isize, 0isize);
 
-    for y in 0..map.len() {
-        for x in 0..map[y].len() {
-            if map[y][x] == '^' {
-                pos = Some((y as isize, x as isize));
-                dir.0 = -1;
-            }
-        }
-    }
+fn part2(input: &str) -> usize {
+    let mut grid = Grid::<char>::from_str(input).unwrap();
+    let start = grid.find(&'^').unwrap();
+    let start_dir = Direction::new(-1, 0);
+    let visited = find_path(&grid, Guard::new(start, start_dir));
 
     let mut count = 0;
-    for y in 0..map.len() {
-        for x in 0..map[y].len() {
-            if y == pos.unwrap().0 as usize && x == pos.unwrap().1 as usize {
+    for y in 0..grid.y_len() {
+        for x in 0..grid.x_len() {
+            let current = Coordinate::new(y as isize, x as isize);
+            if !visited.contains(&current) {
                 continue;
             }
-            let mut map = map.clone();
-            map[y][x] = '#';
-
-            if simulate_walk_with_infinity_check(&map, pos.unwrap(), dir) {
+            let prev = grid.replace(&current, '#');
+            if is_infinite_loop(&grid, Guard::new(start, start_dir)) {
                 count += 1;
             }
+            grid.replace(&current, prev);
         }
     }
     count
 }
 
-fn simulate_walk(map: &Vec<Vec<char>>, start: (isize, isize), dir: (isize, isize)) -> usize {
-    let mut visited = HashSet::<(usize, usize)>::new();
-    let mut pos = start;
-    let mut dir = dir;
+fn find_path(grid: &Grid<char>, mut guard: Guard) -> HashSet<Coordinate> {
+    let mut visited = HashSet::new();
     loop {
-        visited.insert((pos.0 as usize, pos.1 as usize));
-        let (next_y, next_x) = (pos.0 + dir.0, pos.1 + dir.1);
-        if next_y < 0
-            || next_y >= map.len() as isize
-            || next_x < 0
-            || next_x >= map[0].len() as isize
-        {
+        visited.insert(guard.current);
+        if guard.walk(grid) == Stopped {
             break;
         }
-        if map[next_y as usize][next_x as usize] == '#' {
-            // Rotate
-            match dir {
-                (-1, 0) => {
-                    dir = (0, 1);
-                }
-                (0, 1) => {
-                    dir = (1, 0);
-                }
-                (1, 0) => {
-                    dir = (0, -1);
-                }
-                (0, -1) => {
-                    dir = (-1, 0);
-                }
-                _ => unreachable!(),
-            }
-            continue;
-        }
-        pos = (next_y, next_x);
     }
-    visited.len()
+    visited
 }
 
-fn simulate_walk_with_infinity_check(
-    map: &Vec<Vec<char>>,
-    start: (isize, isize),
-    dir: (isize, isize),
-) -> bool {
-    let mut visited = HashSet::<(usize, usize)>::new();
-    let mut pos = start;
-    let mut dir = dir;
-    let mut count_since_new = 0;
+fn is_infinite_loop(grid: &Grid<char>, mut guard: Guard) -> bool {
+    let mut visited = HashSet::new();
     loop {
-        match visited.insert((pos.0 as usize, pos.1 as usize)) {
-            true => {
-                count_since_new = 0;
+        match guard.walk(grid) {
+            Rotate => {
+                if !visited.insert((guard.current, guard.dir)) {
+                    return true;
+                };
+            },
+            Stopped => {
+                return false;
             }
-            false => {
-                count_since_new += 1;
-            }
-        };
-        if count_since_new > visited.len() + 1 {
-            return true;
+            _ => {}
         }
-        let (next_y, next_x) = (pos.0 + dir.0, pos.1 + dir.1);
-        if next_y < 0
-            || next_y >= map.len() as isize
-            || next_x < 0
-            || next_x >= map[0].len() as isize
-        {
-            break;
-        }
-        if map[next_y as usize][next_x as usize] == '#' {
-            // Rotate
-            match dir {
-                (-1, 0) => {
-                    dir = (0, 1);
-                }
-                (0, 1) => {
-                    dir = (1, 0);
-                }
-                (1, 0) => {
-                    dir = (0, -1);
-                }
-                (0, -1) => {
-                    dir = (-1, 0);
-                }
-                _ => unreachable!(),
-            }
-            continue;
-        }
-        pos = (next_y, next_x);
     }
-    false
-}
-
-fn parse(input: &str) -> Vec<Vec<char>> {
-    input.lines().map(|line| line.chars().collect()).collect()
 }
 
 struct Guard {
-    y: usize,
-    x: usize,
-    dir: char,
+    current: Coordinate,
+    dir: Direction,
+}
+
+#[derive(PartialEq)]
+enum Movement {
+    Walk,
+    Rotate,
+    Stopped
+}
+
+impl Guard {
+    pub fn new(start: Coordinate, dir: Direction) -> Self {
+        Self {
+            current: start,
+            dir,
+        }
+    }
+
+    pub fn walk(&mut self, grid: &Grid<char>) -> Movement {
+        let next = Coordinate::new(self.current.y + self.dir.dy, self.current.x + self.dir.dx);
+        if next.y < 0
+            || next.y >= grid.y_len() as isize
+            || next.x < 0
+            || next.x >= grid.x_len() as isize
+        {
+            return Stopped;
+        }
+        if *grid.get(&next) == '#' {
+            self.dir = self.dir.rotated_right();
+            return Rotate;
+        } else {
+            self.current = next;
+        }
+        Movement::Walk
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::y2024::day6::{part1, part2};
 
-    #[test]
-    fn test_part1() {
-        let input = "....#.....
+    const INPUT: &str = "....#.....
 .........#
 ..........
 ..#.......
@@ -168,21 +121,14 @@ mod tests {
 ........#.
 #.........
 ......#...";
-        assert_eq!(part1(input), 41);
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), 41);
     }
 
     #[test]
     fn test_part2() {
-        let input = "....#.....
-.........#
-..........
-..#.......
-.......#..
-..........
-.#..^.....
-........#.
-#.........
-......#...";
-        assert_eq!(part2(input), 6);
+        assert_eq!(part2(INPUT), 6);
     }
 }

@@ -1,6 +1,7 @@
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Coordinate {
-    y: isize,
-    x: isize,
+    pub y: isize,
+    pub x: isize,
 }
 
 impl Coordinate {
