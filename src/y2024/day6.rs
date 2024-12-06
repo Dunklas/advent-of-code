@@ -3,7 +3,6 @@ use crate::util::dir::Direction;
 use crate::util::grid::Grid;
 use std::collections::HashSet;
 use std::str::FromStr;
-use crate::y2024::day6::Movement::{Rotate, Stopped};
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
@@ -44,7 +43,7 @@ fn find_path(grid: &Grid<char>, mut guard: Guard) -> HashSet<Coordinate> {
     let mut visited = HashSet::new();
     loop {
         visited.insert(guard.current);
-        if guard.walk(grid) == Stopped {
+        if guard.walk(grid) == Movement::ExitingArea {
             break;
         }
     }
@@ -55,12 +54,12 @@ fn is_infinite_loop(grid: &Grid<char>, mut guard: Guard) -> bool {
     let mut visited = HashSet::new();
     loop {
         match guard.walk(grid) {
-            Rotate => {
+            Movement::Rotate => {
                 if !visited.insert((guard.current, guard.dir)) {
                     return true;
                 };
             },
-            Stopped => {
+            Movement::ExitingArea => {
                 return false;
             }
             _ => {}
@@ -77,7 +76,7 @@ struct Guard {
 enum Movement {
     Walk,
     Rotate,
-    Stopped
+    ExitingArea
 }
 
 impl Guard {
@@ -95,11 +94,11 @@ impl Guard {
             || next.x < 0
             || next.x >= grid.x_len() as isize
         {
-            return Stopped;
+            return Movement::ExitingArea;
         }
         if *grid.get(&next) == '#' {
             self.dir = self.dir.rotated_right();
-            return Rotate;
+            return Movement::Rotate;
         } else {
             self.current = next;
         }
