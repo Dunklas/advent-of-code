@@ -11,7 +11,7 @@ fn part1(input: &str) -> usize {
     parse(input)
         .unwrap()
         .into_iter()
-        .filter(|(value, operands)| evaluate(*value, operands, 0, false) >= 1)
+        .filter(|(value, operands)| evaluate(*value, operands, 0, false))
         .map(|(value, _)| value)
         .sum()
 }
@@ -20,29 +20,39 @@ fn part2(input: &str) -> usize {
     parse(input)
         .unwrap()
         .into_iter()
-        .filter(|(value, operands)| evaluate(*value, operands, 0, true) >= 1)
+        .filter(|(value, operands)| evaluate(*value, operands, 0, true))
         .map(|(value, _)| value)
         .sum()
 }
 
-fn evaluate(value: usize, operands: &[usize], current: usize, concat_enabled: bool) -> usize {
+fn evaluate(value: usize, operands: &[usize], current: usize, concat_enabled: bool) -> bool {
     let next = operands[0];
     let sum = current + next;
     let product = current * next;
-    let concat = format!("{}{}", current, next).parse::<usize>().unwrap();
+    let concat = concat(current, next);
     if sum == value || product == value || (concat_enabled && concat == value) {
-        return 1;
+        return true;
     }
     let next_operands = &operands[1..];
     if next_operands.is_empty() {
-        return 0;
+        return false;
     }
     evaluate(value, next_operands, sum, concat_enabled)
-        + evaluate(value, next_operands, product, concat_enabled)
-        + match concat_enabled {
+        || evaluate(value, next_operands, product, concat_enabled)
+        || match concat_enabled {
             true => evaluate(value, next_operands, concat, concat_enabled),
-            false => 0,
+            false => false,
         }
+}
+
+fn concat(a: usize, b: usize) -> usize {
+    let mut digits = 1;
+    let mut temp = b;
+    while temp >= 10 {
+        temp /= 10;
+        digits += 1;
+    }
+    a * 10usize.pow(digits) + b
 }
 
 fn parse(input: &str) -> Result<Vec<Equation>, Box<dyn Error>> {
