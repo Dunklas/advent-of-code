@@ -58,7 +58,7 @@ fn is_infinite_loop(grid: &Grid<char>, mut guard: Guard) -> bool {
                 if !visited.insert((guard.current, guard.dir)) {
                     return true;
                 };
-            },
+            }
             Movement::ExitingArea => {
                 return false;
             }
@@ -76,7 +76,7 @@ struct Guard {
 enum Movement {
     Walk,
     Rotate,
-    ExitingArea
+    ExitingArea,
 }
 
 impl Guard {
