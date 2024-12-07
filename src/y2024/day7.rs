@@ -1,10 +1,4 @@
-use lazy_static::lazy_static;
-use regex::Regex;
 use std::error::Error;
-
-lazy_static! {
-    static ref EQUATION: Regex = Regex::new(r"^(\d+): (\d+) (\d+)$").unwrap();
-}
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
