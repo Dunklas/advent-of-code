@@ -3,6 +3,7 @@ use std::{
     io::{self, Read},
 };
 
+mod util;
 mod y2015;
 mod y2023;
 mod y2024;
@@ -112,6 +113,9 @@ fn main() {
             }
             "5" => {
                 y2024::day5::solve(&input);
+            }
+            "6" => {
+                y2024::day6::solve(&input);
             }
             _ => {
                 panic!("Solution does not exist for {} {}", year, day);
