@@ -5,12 +5,14 @@ pub fn solve(input: &str) {
     println!("Part 2: {}", part2(input));
 }
 
+type Equation = (usize, Vec<usize>);
+
 fn part1(input: &str) -> usize {
     parse(input)
         .unwrap()
         .into_iter()
-        .filter(|(result, operands)| evaluate(*result, operands, 0, false) >= 1)
-        .map(|(result, _)| result)
+        .filter(|(value, operands)| evaluate(*value, operands, 0, false) >= 1)
+        .map(|(value, _)| value)
         .sum()
 }
 
@@ -18,8 +20,8 @@ fn part2(input: &str) -> usize {
     parse(input)
         .unwrap()
         .into_iter()
-        .filter(|(result, operands)| evaluate(*result, operands, 0, true) >= 1)
-        .map(|(result, _)| result)
+        .filter(|(value, operands)| evaluate(*value, operands, 0, true) >= 1)
+        .map(|(value, _)| value)
         .sum()
 }
 
@@ -43,7 +45,7 @@ fn evaluate(value: usize, operands: &[usize], current: usize, concat_enabled: bo
         }
 }
 
-fn parse(input: &str) -> Result<Vec<(usize, Vec<usize>)>, Box<dyn Error>> {
+fn parse(input: &str) -> Result<Vec<Equation>, Box<dyn Error>> {
     Ok(input
         .lines()
         .filter_map(|line| {
