@@ -34,15 +34,9 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
     }
 
     pub fn find(&self, value: &T) -> Option<Coordinate> {
-        let mut result = None;
-        for y in 0..self.grid.len() {
-            for x in 0..self.grid[y].len() {
-                if self.grid[y][x] == *value {
-                    result = Some(Coordinate::new(y as isize, x as isize));
-                }
-            }
-        }
-        result
+        self.iter_coordinates()
+            .filter(|coordinate| self.get(coordinate) == Some(value))
+            .next()
     }
 
     pub fn iter_coordinates(&self) -> GridIterator<T> {
@@ -68,11 +62,11 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
         result.into_iter().copied().collect()
     }
 
-    pub fn y_len(&self) -> usize {
+    fn y_len(&self) -> usize {
         self.grid.len()
     }
 
-    pub fn x_len(&self) -> usize {
+    fn x_len(&self) -> usize {
         self.grid[0].len()
     }
 }

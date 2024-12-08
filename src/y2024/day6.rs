@@ -87,14 +87,10 @@ impl Guard {
 
     pub fn walk(&mut self, grid: &Grid<char>) -> Movement {
         let next = Coordinate::new(self.current.y + self.dir.dy, self.current.x + self.dir.dx);
-        if next.y < 0
-            || next.y >= grid.y_len() as isize
-            || next.x < 0
-            || next.x >= grid.x_len() as isize
-        {
+        if !grid.contains(&next) {
             return Movement::ExitingArea;
         }
-        if *grid.get(&next).unwrap() == '#' {
+        if grid.get(&next) == Some(&'#') {
             self.dir = self.dir.rotated_right();
             return Movement::Rotate;
         } else {
