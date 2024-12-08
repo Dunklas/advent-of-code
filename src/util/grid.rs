@@ -55,11 +55,11 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
             if !self.contains(&current) {
                 break;
             }
-            result.push(&self.grid[current.y as usize][current.x as usize]);
+            result.push(self.grid[current.y as usize][current.x as usize]);
             current = Coordinate::new(current.y + dy, current.x + dx);
         }
 
-        result.into_iter().copied().collect()
+        result.into_iter().collect()
     }
 
     fn y_len(&self) -> usize {
