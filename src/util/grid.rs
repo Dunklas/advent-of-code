@@ -101,7 +101,7 @@ impl<T: Debug> Debug for Grid<T> {
             for item in row {
                 write!(f, "{:?}", item)?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -113,7 +113,7 @@ impl<T: Display> Display for Grid<T> {
             for item in row {
                 write!(f, "{}", item)?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }
