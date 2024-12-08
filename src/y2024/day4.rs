@@ -15,31 +15,22 @@ const DIRECTIONS: [(isize, isize); 4] = [(1, 0), (0, 1), (1, 1), (-1, 1)];
 
 fn part1(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
-    let mut count = 0;
-    for y in 0..grid.y_len() {
-        for x in 0..grid.x_len() {
-            let pos = Coordinate::new(y as isize, x as isize);
-            count += DIRECTIONS
+    grid.iter_coordinates()
+        .map(|coordinate| {
+            DIRECTIONS
                 .iter()
-                .map(|(dx, dy)| grid.get_segment(&pos, *dx, *dy, 4))
+                .map(|(dx, dy)| grid.get_segment(&coordinate, *dx, *dy, 4))
                 .filter(|result| result == XMAS || result == SAMX)
-                .count();
-        }
-    }
-    count
+                .count()
+        })
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
-    let mut count = 0;
-    for y in 1..grid.y_len() - 1 {
-        for x in 1..grid.x_len() - 1 {
-            if is_xmas(&grid, &Coordinate::new(y as isize, x as isize)) {
-                count += 1;
-            }
-        }
-    }
-    count
+    grid.iter_coordinates()
+        .filter(|coordinate| is_xmas(&grid, coordinate))
+        .count()
 }
 
 fn is_xmas(grid: &Grid<char>, pos: &Coordinate) -> bool {

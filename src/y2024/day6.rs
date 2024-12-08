@@ -22,21 +22,23 @@ fn part2(input: &str) -> usize {
     let start_dir = Direction::new(-1, 0);
     let visited = find_path(&grid, Guard::new(start, start_dir));
 
-    let mut count = 0;
-    for y in 0..grid.y_len() {
-        for x in 0..grid.x_len() {
-            let current = Coordinate::new(y as isize, x as isize);
-            if !visited.contains(&current) {
-                continue;
+    let coordinates = grid.iter_coordinates().collect::<Vec<_>>();
+    coordinates
+        .iter()
+        .filter(|coordinate| {
+            if !visited.contains(coordinate) {
+                return false;
             }
-            let prev = grid.replace(&current, '#');
-            if is_infinite_loop(&grid, Guard::new(start, start_dir)) {
-                count += 1;
+            match grid.replace(coordinate, '#') {
+                Some(prev) => {
+                    let is_loop = is_infinite_loop(&grid, Guard::new(start, start_dir));
+                    grid.replace(coordinate, prev);
+                    is_loop
+                }
+                None => unreachable!(),
             }
-            grid.replace(&current, prev);
-        }
-    }
-    count
+        })
+        .count()
 }
 
 fn find_path(grid: &Grid<char>, mut guard: Guard) -> HashSet<Coordinate> {
@@ -89,14 +91,10 @@ impl Guard {
 
     pub fn walk(&mut self, grid: &Grid<char>) -> Movement {
         let next = Coordinate::new(self.current.y + self.dir.dy, self.current.x + self.dir.dx);
-        if next.y < 0
-            || next.y >= grid.y_len() as isize
-            || next.x < 0
-            || next.x >= grid.x_len() as isize
-        {
+        if !grid.contains(&next) {
             return Movement::ExitingArea;
         }
-        if *grid.get(&next).unwrap() == '#' {
+        if grid.get(&next) == Some(&'#') {
             self.dir = self.dir.rotated_right();
             return Movement::Rotate;
         } else {
