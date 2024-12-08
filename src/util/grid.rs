@@ -1,4 +1,5 @@
 use crate::util::coordinate::Coordinate;
+use itertools::Itertools;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -6,11 +7,9 @@ pub struct Grid<T> {
     grid: Vec<Vec<T>>,
 }
 
-#[derive(Debug)]
-pub struct ParseGridError {}
-
 impl<T: Copy + PartialEq<T>> Grid<T> {
-    fn new(grid: Vec<Vec<T>>) -> Self {
+    pub fn new(grid: Vec<Vec<T>>) -> Self {
+        assert!(grid.iter().map(|row| row.len()).all_equal());
         Self { grid }
     }
 
@@ -70,6 +69,9 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
         self.grid[0].len()
     }
 }
+
+#[derive(Debug)]
+pub struct ParseGridError {}
 
 impl<T> FromStr for Grid<T>
 where
