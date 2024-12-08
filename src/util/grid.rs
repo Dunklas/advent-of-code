@@ -34,8 +34,7 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
 
     pub fn find(&self, value: &T) -> Option<Coordinate> {
         self.iter_coordinates()
-            .filter(|coordinate| self.get(coordinate) == Some(value))
-            .next()
+            .find(|coordinate| self.get(coordinate) == Some(value))
     }
 
     pub fn iter_coordinates(&self) -> GridIterator<T> {

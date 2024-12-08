@@ -29,7 +29,7 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
     grid.iter_coordinates()
-        .filter(|coordinate| is_xmas(&grid, &coordinate))
+        .filter(|coordinate| is_xmas(&grid, coordinate))
         .count()
 }
 
