@@ -128,7 +128,7 @@ where
     x: usize,
 }
 
-impl<'a, T> Iterator for GridIterator<'a, T>
+impl<T> Iterator for GridIterator<'_, T>
 where
     T: Copy + PartialEq<T>,
 {
