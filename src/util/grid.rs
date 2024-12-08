@@ -1,8 +1,9 @@
 use crate::util::coordinate::Coordinate;
 use itertools::Itertools;
+use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Grid<T> {
     grid: Vec<Vec<T>>,
 }
@@ -91,6 +92,30 @@ where
             })
             .collect();
         grid.map(Grid::new)
+    }
+}
+
+impl<T: Debug> Debug for Grid<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        for row in &self.grid {
+            for item in row {
+                write!(f, "{:?}", item)?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
+}
+
+impl<T: Display> Display for Grid<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        for row in &self.grid {
+            for item in row {
+                write!(f, "{}", item)?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
     }
 }
 
