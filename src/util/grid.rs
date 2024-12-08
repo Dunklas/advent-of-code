@@ -68,6 +68,7 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
         self.iter().map(|(coordinate, _)| coordinate)
     }
 
+    #[allow(dead_code)]
     pub fn values(&self) -> impl Iterator<Item = &T> {
         self.iter().map(|(_, value)| value)
     }
@@ -218,6 +219,21 @@ mod tests {
     }
 
     #[test]
+    fn test_iter() {
+        let grid = Grid::new(vec![vec![1, 2], vec![3, 4]]);
+        let entries: Vec<_> = grid.iter().collect();
+        assert_eq!(
+            entries,
+            vec![
+                (Coordinate::new(0, 0), &1),
+                (Coordinate::new(0, 1), &2),
+                (Coordinate::new(1, 0), &3),
+                (Coordinate::new(1, 1), &4),
+            ]
+        );
+    }
+
+    #[test]
     fn test_iter_coordinates() {
         let grid = Grid::new(vec![vec![1, 2], vec![3, 4]]);
         let coordinates: Vec<Coordinate> = grid.coordinates().collect();
@@ -230,6 +246,13 @@ mod tests {
                 Coordinate::new(1, 1),
             ]
         );
+    }
+
+    #[test]
+    fn test_iter_values() {
+        let grid = Grid::new(vec![vec![1, 2], vec![3, 4]]);
+        let values: Vec<_> = grid.values().copied().collect();
+        assert_eq!(values, vec![1, 2, 3, 4]);
     }
 
     #[test]
