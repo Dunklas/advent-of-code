@@ -48,7 +48,6 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
     pub fn get_segment(&self, start: &Coordinate, dx: isize, dy: isize, len: usize) -> Vec<T> {
         let mut result = Vec::new();
         let mut current = Coordinate::new(start.y, start.x);
-
         for _ in 0..len {
             if !self.contains(&current) {
                 break;
@@ -56,8 +55,7 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
             result.push(self.grid[current.y as usize][current.x as usize]);
             current = Coordinate::new(current.y + dy, current.x + dx);
         }
-
-        result.into_iter().collect()
+        result
     }
 
     fn y_len(&self) -> usize {
