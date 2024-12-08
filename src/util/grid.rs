@@ -39,16 +39,8 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
     }
 
     pub fn find(&self, value: &T) -> Option<Coordinate> {
-        self.iter_coordinates()
+        self.coordinates()
             .find(|coordinate| self.get(coordinate) == Some(value))
-    }
-
-    pub fn iter_coordinates(&self) -> GridIterator<T> {
-        GridIterator {
-            grid: self,
-            y: 0,
-            x: 0,
-        }
     }
 
     pub fn get_segment(&self, start: &Coordinate, dx: isize, dy: isize, len: usize) -> Vec<T> {
@@ -62,6 +54,22 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
             current = Coordinate::new(current.y + dy, current.x + dx);
         }
         result
+    }
+
+    pub fn iter(&self) -> GridIterator<T> {
+        GridIterator {
+            grid: self,
+            y: 0,
+            x: 0,
+        }
+    }
+
+    pub fn coordinates(&self) -> impl Iterator<Item = Coordinate> + '_ {
+        self.iter().map(|(coordinate, _)| coordinate)
+    }
+
+    pub fn values(&self) -> impl Iterator<Item = &T> {
+        self.iter().map(|(_, value)| value)
     }
 
     fn y_len(&self) -> usize {
@@ -128,16 +136,20 @@ where
     x: usize,
 }
 
-impl<T> Iterator for GridIterator<'_, T>
+impl<'a, T> Iterator for GridIterator<'a, T>
 where
     T: Copy + PartialEq<T>,
 {
-    type Item = Coordinate;
+    type Item = (Coordinate, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
         if self.x < self.grid.x_len() {
-            let next = Coordinate::new(self.y as isize, self.x as isize);
+            let coordinate = Coordinate::new(self.y as isize, self.x as isize);
+            let value = match self.grid.get(&coordinate) {
+                Some(value) => value,
+                None => unreachable!(),
+            };
             self.x += 1;
-            return Some(next);
+            return Some((coordinate, value));
         }
         self.y += 1;
         if self.y < self.grid.y_len() {
@@ -208,7 +220,7 @@ mod tests {
     #[test]
     fn test_iter_coordinates() {
         let grid = Grid::new(vec![vec![1, 2], vec![3, 4]]);
-        let coordinates: Vec<Coordinate> = grid.iter_coordinates().collect();
+        let coordinates: Vec<Coordinate> = grid.coordinates().collect();
         assert_eq!(
             coordinates,
             vec![

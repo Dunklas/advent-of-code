@@ -15,7 +15,7 @@ const DIRECTIONS: [(isize, isize); 4] = [(1, 0), (0, 1), (1, 1), (-1, 1)];
 
 fn part1(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
-    grid.iter_coordinates()
+    grid.coordinates()
         .map(|coordinate| {
             DIRECTIONS
                 .iter()
@@ -28,7 +28,7 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
-    grid.iter_coordinates()
+    grid.coordinates()
         .filter(|coordinate| is_xmas(&grid, coordinate))
         .count()
 }

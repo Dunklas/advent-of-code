@@ -53,7 +53,7 @@ fn trajectory(start: Coordinate, direction: Coordinate, grid: &Grid<char>) -> Ve
 }
 
 fn antennas_by_frequency(grid: &Grid<char>) -> HashMap<char, Vec<Coordinate>> {
-    grid.iter_coordinates()
+    grid.coordinates()
         .filter(|coordinate| grid.get(coordinate) != Some(&'.'))
         .fold(HashMap::new(), |mut antennas, coordinate| {
             if let Some(frequency) = grid.get(&coordinate) {
