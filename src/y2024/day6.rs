@@ -22,7 +22,7 @@ fn part2(input: &str) -> usize {
     let start_dir = Direction::new(-1, 0);
     let visited = find_path(&grid, Guard::new(start, start_dir));
 
-    let coordinates = grid.iter_coordinates().collect::<Vec<_>>();
+    let coordinates = grid.coordinates().collect::<Vec<_>>();
     coordinates
         .iter()
         .filter(|coordinate| {
