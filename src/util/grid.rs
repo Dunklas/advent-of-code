@@ -45,6 +45,14 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
         result
     }
 
+    pub fn iter_coordinates(&self) -> GridIterator<T> {
+        GridIterator {
+            grid: self,
+            y: 0,
+            x: 0,
+        }
+    }
+
     pub fn get_segment(&self, start: &Coordinate, dx: isize, dy: isize, len: usize) -> Vec<T> {
         let mut result = Vec::new();
         let mut current = Coordinate::new(start.y, start.x);
@@ -85,5 +93,34 @@ where
             })
             .collect();
         grid.map(Grid::new)
+    }
+}
+
+pub struct GridIterator<'a, T>
+where
+    T: Copy + PartialEq<T>,
+{
+    grid: &'a Grid<T>,
+    y: usize,
+    x: usize,
+}
+
+impl<'a, T> Iterator for GridIterator<'a, T>
+where
+    T: Copy + PartialEq<T>,
+{
+    type Item = Coordinate;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.x < self.grid.x_len() {
+            let next = Coordinate::new(self.y as isize, self.x as isize);
+            self.x += 1;
+            return Some(next);
+        }
+        self.y += 1;
+        if self.y < self.grid.y_len() {
+            self.x = 0;
+            return self.next();
+        }
+        None
     }
 }

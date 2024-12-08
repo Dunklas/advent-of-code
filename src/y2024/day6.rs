@@ -22,21 +22,19 @@ fn part2(input: &str) -> usize {
     let start_dir = Direction::new(-1, 0);
     let visited = find_path(&grid, Guard::new(start, start_dir));
 
-    let mut count = 0;
-    for y in 0..grid.y_len() {
-        for x in 0..grid.x_len() {
-            let current = Coordinate::new(y as isize, x as isize);
-            if !visited.contains(&current) {
-                continue;
+    let coordinates = grid.iter_coordinates().collect::<Vec<_>>();
+    coordinates
+        .iter()
+        .filter(|coordinate| {
+            if !visited.contains(coordinate) {
+                return false;
             }
-            let prev = grid.replace(&current, '#');
-            if is_infinite_loop(&grid, Guard::new(start, start_dir)) {
-                count += 1;
-            }
-            grid.replace(&current, prev);
-        }
-    }
-    count
+            let prev = grid.replace(coordinate, '#');
+            let is_loop = is_infinite_loop(&grid, Guard::new(start, start_dir));
+            grid.replace(coordinate, prev);
+            is_loop
+        })
+        .count()
 }
 
 fn find_path(grid: &Grid<char>, mut guard: Guard) -> HashSet<Coordinate> {
