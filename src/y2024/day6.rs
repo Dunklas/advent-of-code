@@ -96,7 +96,7 @@ impl Guard {
         {
             return Movement::ExitingArea;
         }
-        if *grid.get(&next) == '#' {
+        if *grid.get(&next).unwrap() == '#' {
             self.dir = self.dir.rotated_right();
             return Movement::Rotate;
         } else {

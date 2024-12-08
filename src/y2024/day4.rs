@@ -43,7 +43,7 @@ fn part2(input: &str) -> usize {
 }
 
 fn is_xmas(grid: &Grid<char>, pos: &Coordinate) -> bool {
-    if *grid.get(pos) != 'A' {
+    if *grid.get(pos).unwrap() != 'A' {
         return false;
     }
     vec![
