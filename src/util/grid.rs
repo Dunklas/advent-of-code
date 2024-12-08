@@ -19,10 +19,15 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
             .get(coordinate.x as usize)
     }
 
-    pub fn replace(&mut self, coordinate: &Coordinate, value: T) -> T {
-        let prev = self.grid[coordinate.y as usize][coordinate.x as usize];
-        self.grid[coordinate.y as usize][coordinate.x as usize] = value;
-        prev
+    pub fn replace(&mut self, coordinate: &Coordinate, value: T) -> Option<T> {
+        match self.contains(coordinate) {
+            true => {
+                let prev = self.grid[coordinate.y as usize][coordinate.x as usize];
+                self.grid[coordinate.y as usize][coordinate.x as usize] = value;
+                Some(prev)
+            }
+            false => None,
+        }
     }
 
     pub fn contains(&self, coordinate: &Coordinate) -> bool {

@@ -29,10 +29,14 @@ fn part2(input: &str) -> usize {
             if !visited.contains(coordinate) {
                 return false;
             }
-            let prev = grid.replace(coordinate, '#');
-            let is_loop = is_infinite_loop(&grid, Guard::new(start, start_dir));
-            grid.replace(coordinate, prev);
-            is_loop
+            match grid.replace(coordinate, '#') {
+                Some(prev) => {
+                    let is_loop = is_infinite_loop(&grid, Guard::new(start, start_dir));
+                    grid.replace(coordinate, prev);
+                    is_loop
+                }
+                None => unreachable!(),
+            }
         })
         .count()
 }
