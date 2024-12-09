@@ -1,3 +1,4 @@
+use std::fmt::Formatter;
 use std::ops::Index;
 
 pub fn solve(input: &str) {
@@ -12,13 +13,38 @@ fn part1(input: &str) -> i64 {
 }
 
 fn part2(input: &str) -> usize {
+    let mut input = parse(input);
+    move2(&mut input);
+    for c in input {
+        println!("{}", c);
+    }
     0
+}
+
+fn move2(file_system: &mut Vec<i64>) {
+    // TODO: use ranges?
+    let clone = file_system.clone();
+    let mut iter = file_system.iter().rev().peekable();
+    let mut current_id = None;
+    let mut current_size = 0;
+    while let Some(current) = iter.next() {
+        if *current == -1 {
+            continue;
+        }
+        current_id = Some(*current);
+        current_size += 1;
+        if let Some(next_id) = iter.peek() {
+            if Some(**next_id) == current_id {
+                continue;
+            }
+        }
+    }
 }
 
 fn move_blocks(file_system: &mut Vec<i64>) {
     for i in (0..file_system.len()).rev() {
         if file_system[i] != -1 {
-            if let Some(left_most) = file_system.iter().enumerate().position(|(i, &b)|b == -1) {
+            if let Some(left_most) = file_system.iter().enumerate().position(|(i, &b)| b == -1) {
                 if left_most >= i {
                     break;
                 }
@@ -74,6 +100,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        assert_eq!(part2(INPUT), 2858);
     }
 }
