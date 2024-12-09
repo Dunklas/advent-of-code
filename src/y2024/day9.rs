@@ -14,7 +14,9 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let input = parse(input);
+    let result = move_files(input);
+    checksum(result)
 }
 
 fn checksum(file_system: Vec<(Content, Range<usize>)>) -> usize {
@@ -26,9 +28,55 @@ fn checksum(file_system: Vec<(Content, Range<usize>)>) -> usize {
                 sum += id * i;
                 i += 1;
             }
+        } else {
+            for _ in range {
+                i += 1;
+            }
         }
     }
     sum
+}
+
+fn move_files(file_system: Vec<(Content, Range<usize>)>) -> Vec<(Content, Range<usize>)> {
+    let mut initial: VecDeque<_> = file_system.into_iter().collect();
+    let mut result = Vec::new();
+
+    let mut current_end = 0usize;
+    while let Some((c1, r1)) = initial.pop_front() {
+        match c1 {
+            Content::Free => {
+                let mut tmp = Vec::new();
+                let mut fixedi = false;
+                while let Some((c2, r2)) = initial.pop_back() {
+                    if c2 == Content::Free || r2.len() > r1.len() {
+                        tmp.push((c2, r2));
+                        continue;
+                    }
+                    fixedi = true;
+                    let diff = r1.len() - r2.len();
+                    if diff != 0 {
+                        initial.push_front((c1, (r1.start + r2.len())..r1.end));
+                    }
+                    result.push((c2, current_end..current_end + r2.len()));
+                    current_end += r2.len();
+                    tmp.push((Content::Free, r2));
+                    break;
+                }
+                if !fixedi {
+                    result.push((c1, r1));
+                }
+                while let Some(x) = tmp.pop() {
+                    initial.push_back(x);
+                }
+            },
+            _ => {
+                current_end += r1.len();
+                result.push((c1, r1));
+            }
+        }
+    }
+
+    result
 }
 
 fn move_blocks(file_system: Vec<(Content, Range<usize>)>) -> Vec<(Content, Range<usize>)> {
@@ -108,6 +156,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        assert_eq!(part2(INPUT), 2858);
     }
 }
