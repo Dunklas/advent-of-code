@@ -43,6 +43,11 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
             .find(|coordinate| self.get(coordinate) == Some(value))
     }
 
+    pub fn find_all<'a>(&'a self, value: &'a T) -> impl Iterator<Item = Coordinate> + 'a {
+        self.coordinates()
+            .filter(move |coordinate| self.get(coordinate) == Some(value))
+    }
+
     pub fn get_segment(&self, start: &Coordinate, dx: isize, dy: isize, len: usize) -> Vec<T> {
         let mut result = Vec::new();
         let mut current = Coordinate::new(start.y, start.x);
