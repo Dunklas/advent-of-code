@@ -1,146 +1,166 @@
+use itertools::Itertools;
 use std::cmp::Ordering;
-use std::collections::VecDeque;
-use std::ops::Range;
+use std::mem::swap;
+use std::str::FromStr;
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
-    println!("Part 1: {}", part2(input));
+    println!("Part 2: {}", part2(input));
 }
 
 fn part1(input: &str) -> usize {
-    let input = parse(input);
-    let result = move_blocks(input);
-    checksum(result)
+    let mut map = DiskMap::from_str(input).expect("Failed to parse input");
+    map.compact(true);
+    map.checksum()
 }
 
 fn part2(input: &str) -> usize {
-    let input = parse(input);
-    let result = move_files(input);
-    checksum(result)
+    let mut map = DiskMap::from_str(input).expect("Failed to parse input");
+    map.compact(false);
+    map.checksum()
 }
 
-fn checksum(file_system: Vec<(Content, Range<usize>)>) -> usize {
-    let mut sum = 0;
-    let mut i = 0usize;
-    for (c, range) in file_system {
-        if let Content::File(id) = c {
-            for _ in range {
-                sum += id * i;
-                i += 1;
-            }
-        } else {
-            for _ in range {
-                i += 1;
-            }
-        }
-    }
-    sum
+#[derive(Debug)]
+struct Block {
+    start: usize,
+    file_id: Option<usize>,
+    len: usize,
 }
 
-fn move_files(file_system: Vec<(Content, Range<usize>)>) -> Vec<(Content, Range<usize>)> {
-    let mut initial: VecDeque<_> = file_system.into_iter().collect();
-    let mut result = Vec::new();
-
-    let mut current_end = 0usize;
-    while let Some((c1, r1)) = initial.pop_front() {
-        match c1 {
-            Content::Free => {
-                let mut tmp = Vec::new();
-                let mut fixedi = false;
-                while let Some((c2, r2)) = initial.pop_back() {
-                    if c2 == Content::Free || r2.len() > r1.len() {
-                        tmp.push((c2, r2));
-                        continue;
-                    }
-                    fixedi = true;
-                    let diff = r1.len() - r2.len();
-                    if diff != 0 {
-                        initial.push_front((c1, (r1.start + r2.len())..r1.end));
-                    }
-                    result.push((c2, current_end..current_end + r2.len()));
-                    current_end += r2.len();
-                    tmp.push((Content::Free, r2));
-                    break;
-                }
-                if !fixedi {
-                    result.push((c1, r1));
-                }
-                while let Some(x) = tmp.pop() {
-                    initial.push_back(x);
-                }
-            },
-            _ => {
-                current_end += r1.len();
-                result.push((c1, r1));
-            }
+impl Block {
+    fn new_file(start: usize, len: usize, id: usize) -> Self {
+        Self {
+            start,
+            len,
+            file_id: Some(id),
         }
     }
 
-    result
+    fn new_free(start: usize, len: usize) -> Self {
+        Self {
+            start,
+            len,
+            file_id: None,
+        }
+    }
 }
 
-fn move_blocks(file_system: Vec<(Content, Range<usize>)>) -> Vec<(Content, Range<usize>)> {
-    let mut initial: VecDeque<_> = file_system.into_iter().collect();
-    let mut result = Vec::new();
-    let mut current_end = 0usize;
-    while let Some((c1, mut r1)) = initial.pop_front() {
-        match c1 {
-            Content::Free => {
-                while let Some((c2, r2)) = initial.pop_back() {
-                    if c2 == Content::Free || r2.is_empty() {
-                        continue;
-                    }
-                    match r1.len().cmp(&r2.len()) {
-                        Ordering::Less => {
-                            result.push((c2, current_end..current_end + r1.len()));
-                            current_end += r1.len();
-                            initial.push_back((c2, r2.start..r2.end - r1.len()));
-                            break;
+#[derive(Debug)]
+struct DiskMap {
+    free: Vec<Block>,
+    files: Vec<Block>,
+}
+
+impl DiskMap {
+    fn compact(&mut self, allow_partials: bool) {
+        let mut i = (self.files.len() - 1) as isize;
+        while i >= 0 {
+            if let Some(free_i) = self.find_next_free(&self.files[i as usize], allow_partials) {
+                let free_block = &mut self.free[free_i];
+                let file = &mut self.files[i as usize];
+                if let Some(remainder) = move_file_into_block(free_block, file) {
+                    match remainder.file_id {
+                        Some(_) => {
+                            self.files.push(remainder);
+                            continue;
                         }
-                        Ordering::Equal => {
-                            result.push((c2, current_end..current_end + r1.len()));
-                            current_end += r1.len();
-                            break;
-                        }
-                        Ordering::Greater => {
-                            r1.start += r2.len();
-                            result.push((c2, current_end..current_end + r2.len()));
-                            current_end += r2.len();
+                        None => {
+                            self.free.push(remainder);
                         }
                     }
                 }
             }
-            _ => {
-                current_end += r1.len();
-                result.push((c1, r1));
-            }
+            i -= 1;
         }
     }
-    result
+
+    fn find_next_free(&self, file: &Block, allow_partial: bool) -> Option<usize> {
+        self.free.iter().position(|block| {
+            block.start < file.start
+                && ((allow_partial && block.len > 0) || (!allow_partial && block.len >= file.len))
+        })
+    }
+
+    fn checksum(&self) -> usize {
+        self.files
+            .iter()
+            .chain(self.free.iter())
+            .sorted_by(|a, b| a.start.cmp(&b.start))
+            .flat_map(|block| (0..block.len).map(|_| block.file_id))
+            .enumerate()
+            .fold(0, |sum, (i, file_id)| match file_id {
+                Some(id) => sum + (id * i),
+                None => sum,
+            })
+    }
 }
 
-fn parse(input: &str) -> Vec<(Content, Range<usize>)> {
-    let mut result = Vec::new();
-    let mut current = 0;
-    let mut id_seq = 0;
-    input.chars().enumerate().for_each(|(i, c)| {
-        if let Some(value) = c.to_digit(10) {
-            if i % 2 == 0 {
-                result.push((Content::File(id_seq), current..current + value as usize));
-                id_seq += 1;
-            } else {
-                result.push((Content::Free, current..current + value as usize));
-            }
-            current += value as usize;
+fn move_file_into_block(free_block: &mut Block, file: &mut Block) -> Option<Block> {
+    match free_block.len.cmp(&file.len) {
+        Ordering::Less => {
+            file.len -= free_block.len;
+            let tmp = free_block.len;
+            free_block.len = 0;
+            Some(Block::new_file(
+                free_block.start,
+                tmp,
+                file.file_id.unwrap(),
+            ))
         }
-    });
-    result
+        Ordering::Equal => {
+            swap(&mut free_block.start, &mut file.start);
+            None
+        }
+        Ordering::Greater => {
+            let tmp = file.start;
+            file.start = free_block.start;
+            free_block.start += file.len;
+            free_block.len -= file.len;
+            Some(Block::new_free(tmp, file.len))
+        }
+    }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum Content {
-    File(usize),
-    Free,
+#[derive(Debug)]
+struct ParseDiskMapError {}
+impl FromStr for DiskMap {
+    type Err = ParseDiskMapError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut pos = 0;
+        let mut id = 0;
+        let blocks: Vec<Block> = parse_blocks(s)?
+            .into_iter()
+            .map(|(i, len)| {
+                let block = Block {
+                    start: pos,
+                    file_id: if i % 2 == 0 { Some(id) } else { None },
+                    len: len as usize,
+                };
+                pos += len as usize;
+                if i % 2 == 0 {
+                    id += 1;
+                }
+                block
+            })
+            .collect();
+        let (files, free): (Vec<_>, Vec<_>) = blocks
+            .into_iter()
+            .partition(|block| block.file_id.is_some());
+        Ok(Self { free, files })
+    }
+}
+
+fn parse_blocks(s: &str) -> Result<Vec<(usize, u32)>, ParseDiskMapError> {
+    s.trim()
+        .chars()
+        .enumerate()
+        .map(|(i, c)| {
+            c.to_digit(10)
+                .map(|len| (i, len))
+                .ok_or(ParseDiskMapError {})
+        })
+        .collect()
 }
 
 #[cfg(test)]
