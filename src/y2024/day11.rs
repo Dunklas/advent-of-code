@@ -1,4 +1,3 @@
-use std::borrow::ToOwned;
 use std::collections::HashMap;
 
 pub fn solve(input: &str) {
@@ -7,63 +6,78 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
-    let mut stones = parse(input);
-    let mut count = 0;
-    let mut cache: HashMap<(String, usize), usize> = HashMap::new();
-
-    for stone in stones {
-        count += blink3(stone, 25, &mut cache);
-    }
-    count
+    let stones = parse(input).unwrap();
+    observe_stones(stones, 25)
 }
 
 fn part2(input: &str) -> usize {
-    let mut stones = parse(input);
-    let mut count = 0;
-    let mut cache: HashMap<(String, usize), usize> = HashMap::new();
-
-    for stone in stones {
-        count += blink3(stone, 75, &mut cache);
-    }
-    count
+    let stones = parse(input).unwrap();
+    observe_stones(stones, 75)
 }
 
-fn blink3(stone: String, remaining_blinks: usize, cache: &mut HashMap<(String, usize), usize>) -> usize {
-    if remaining_blinks == 0 {
-        return 1;
-    }
-    let res = match stone.as_str() {
-        "0" => {
-            vec!["1".to_owned()]
-        }
-        stone if stone.len() % 2 == 0 => {
-            let (left, right) = stone.split_at(stone.len() / 2);
-            vec![left.parse::<usize>().unwrap().to_string(), right.parse::<usize>().unwrap().to_string()]
-        }
-        _ => {
-            let old_n = stone.parse::<usize>().unwrap();
-            vec![(old_n * 2024).to_string()]
-        }
-    };
-    if remaining_blinks == 1 {
-        return res.len();
-    }
-    res.into_iter()
-        .map(|x| {
-            match cache.get(&(x.clone(), remaining_blinks - 1)) {
-                Some(&n) => n,
-                None => {
-                    let res = blink3(x.clone(), remaining_blinks - 1, cache);
-                    cache.insert((x, remaining_blinks - 1), res);
-                    res
-                }
-            }
-        })
+fn observe_stones(stones: Vec<usize>, num_blinks: usize) -> usize {
+    let mut cache = MemoizationCache::new();
+    stones
+        .into_iter()
+        .map(|stone| blink(stone, num_blinks, &mut cache))
         .sum()
 }
 
-fn parse(input: &str) -> Vec<String> {
-    input.split_whitespace().map(|c| c.to_string()).collect()
+fn blink(stone: usize, remaining_blinks: usize, cache: &mut MemoizationCache) -> usize {
+    if remaining_blinks == 0 {
+        return 1;
+    }
+    if let Some(result) = cache.get(stone, remaining_blinks) {
+        return result;
+    }
+    let result = match stone {
+        0 => blink(1, remaining_blinks - 1, cache),
+        stone if num_digits(stone) % 2 == 0 => {
+            let (left, right) = split_number(stone);
+            blink(left, remaining_blinks - 1, cache) + blink(right, remaining_blinks - 1, cache)
+        }
+        _ => blink(stone * 2024, remaining_blinks - 1, cache),
+    };
+    cache.set(stone, remaining_blinks, result);
+    result
+}
+
+fn num_digits(num: usize) -> usize {
+    (num.ilog10() + 1) as usize
+}
+
+fn split_number(num: usize) -> (usize, usize) {
+    let divisor = 10_usize.pow((num_digits(num) / 2) as u32);
+    (num / divisor, num % divisor)
+}
+
+struct MemoizationCache {
+    cache: HashMap<(usize, usize), usize>,
+}
+
+impl MemoizationCache {
+    pub fn new() -> Self {
+        Self {
+            cache: HashMap::new(),
+        }
+    }
+
+    pub fn set(&mut self, key: usize, num_blinks: usize, value: usize) {
+        self.cache.insert((key, num_blinks), value);
+    }
+
+    pub fn get(&self, key: usize, num_blinks: usize) -> Option<usize> {
+        self.cache
+            .get(&(key, num_blinks))
+            .copied()
+    }
+}
+
+fn parse(input: &str) -> Result<Vec<usize>, std::num::ParseIntError> {
+    input
+        .split_whitespace()
+        .map(|c| c.parse::<usize>())
+        .collect()
 }
 
 #[cfg(test)]
@@ -75,5 +89,10 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 55312);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 65601038650482);
     }
 }
