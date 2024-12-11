@@ -15,19 +15,17 @@ fn part2(input: &str) -> usize {
     observe_stones(stones, 75)
 }
 
+type MemoizationCache = HashMap<(usize, usize), usize>;
+
 fn observe_stones(stones: Vec<usize>, num_blinks: usize) -> usize {
-    let mut cache = HashMap::<(usize, usize), usize>::new();
+    let mut cache = MemoizationCache::new();
     stones
         .into_iter()
         .map(|stone| blink(stone, num_blinks, &mut cache))
         .sum()
 }
 
-fn blink(
-    stone: usize,
-    remaining_blinks: usize,
-    cache: &mut HashMap<(usize, usize), usize>,
-) -> usize {
+fn blink(stone: usize, remaining_blinks: usize, cache: &mut MemoizationCache) -> usize {
     if remaining_blinks == 0 {
         return 1;
     }
