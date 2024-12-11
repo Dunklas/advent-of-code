@@ -16,19 +16,23 @@ fn part2(input: &str) -> usize {
 }
 
 fn observe_stones(stones: Vec<usize>, num_blinks: usize) -> usize {
-    let mut cache = MemoizationCache::new();
+    let mut cache = HashMap::<(usize, usize), usize>::new();
     stones
         .into_iter()
         .map(|stone| blink(stone, num_blinks, &mut cache))
         .sum()
 }
 
-fn blink(stone: usize, remaining_blinks: usize, cache: &mut MemoizationCache) -> usize {
+fn blink(
+    stone: usize,
+    remaining_blinks: usize,
+    cache: &mut HashMap<(usize, usize), usize>,
+) -> usize {
     if remaining_blinks == 0 {
         return 1;
     }
-    if let Some(result) = cache.get(stone, remaining_blinks) {
-        return result;
+    if let Some(result) = cache.get(&(stone, remaining_blinks)) {
+        return *result;
     }
     let result = match stone {
         0 => blink(1, remaining_blinks - 1, cache),
@@ -38,7 +42,7 @@ fn blink(stone: usize, remaining_blinks: usize, cache: &mut MemoizationCache) ->
         }
         _ => blink(stone * 2024, remaining_blinks - 1, cache),
     };
-    cache.set(stone, remaining_blinks, result);
+    cache.insert((stone, remaining_blinks), result);
     result
 }
 
@@ -49,28 +53,6 @@ fn num_digits(num: usize) -> usize {
 fn split_number(num: usize) -> (usize, usize) {
     let divisor = 10_usize.pow((num_digits(num) / 2) as u32);
     (num / divisor, num % divisor)
-}
-
-struct MemoizationCache {
-    cache: HashMap<(usize, usize), usize>,
-}
-
-impl MemoizationCache {
-    pub fn new() -> Self {
-        Self {
-            cache: HashMap::new(),
-        }
-    }
-
-    pub fn set(&mut self, key: usize, num_blinks: usize, value: usize) {
-        self.cache.insert((key, num_blinks), value);
-    }
-
-    pub fn get(&self, key: usize, num_blinks: usize) -> Option<usize> {
-        self.cache
-            .get(&(key, num_blinks))
-            .copied()
-    }
 }
 
 fn parse(input: &str) -> Result<Vec<usize>, std::num::ParseIntError> {
