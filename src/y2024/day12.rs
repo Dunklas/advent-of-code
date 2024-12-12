@@ -78,7 +78,8 @@ fn num_sides(rect: &HashSet<Coordinate>) -> usize {
     let min_x = sorted.iter().map(|c| c.x).min().unwrap();
     let max_x = sorted.iter().map(|c| c.x).max().unwrap();
 
-    let mut vertical_sides: Vec<(isize, isize)> = vec![];
+    let mut vertical_enters: Vec<(isize, isize)> = vec![];
+    let mut vertical_exits: Vec<(isize, isize)> = vec![];
     let mut inside = false;
     for y in (min_y - 1)..(max_y + 2) {
         for x in (min_x - 1)..(max_x + 2) {
@@ -86,47 +87,48 @@ fn num_sides(rect: &HashSet<Coordinate>) -> usize {
             if rect.contains(&c) && !inside {
                 // Entered
                 inside = true;
-                if let Some(mut aaa) = vertical_sides.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
+                if let Some(mut aaa) = vertical_enters.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
                     aaa.1 = y;
                 } else {
-                    vertical_sides.push((x, y));
+                    vertical_enters.push((x, y));
                 }
             } else if !rect.contains(&c) && inside {
                 // Left
                 inside = false;
-                if let Some(aaa) = vertical_sides.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
+                if let Some(aaa) = vertical_exits.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
                     aaa.1 = y;
                 } else {
-                    vertical_sides.push((x, y));
+                    vertical_exits.push((x, y));
                 }
             }
         }
     }
 
-    let mut horizontal: Vec<(isize, isize)> = vec![];
+    let mut horizontal_enters: Vec<(isize, isize)> = vec![];
+    let mut horizontal_exits: Vec<(isize, isize)> = vec![];
     let mut inside = false;
     for x in (min_x - 1)..(max_x + 2) {
         for y in (min_y - 1)..(max_y + 2) {
             let c = Coordinate::new(y, x);
             if rect.contains(&c) && !inside {
                 inside = true;
-                if let Some(mut aaa) = horizontal.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
+                if let Some(mut aaa) = horizontal_enters.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
                     aaa.1 = x;
                 } else {
-                    horizontal.push((y, x));
+                    horizontal_enters.push((y, x));
                 }
             } else if !rect.contains(&c) && inside {
                 // Left
                 inside = false;
-                if let Some(aaa) = horizontal.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
+                if let Some(aaa) = horizontal_exits.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
                     aaa.1 = x;
                 } else {
-                    horizontal.push((y, x));
+                    horizontal_exits.push((y, x));
                 }
             }
         }
     }
-    horizontal.len() + vertical_sides.len()
+    horizontal_enters.len() + vertical_enters.len() + horizontal_exits.len() + vertical_exits.len()
 }
 
 fn perimeter(rect: &HashSet<Coordinate>) -> usize {
@@ -163,6 +165,19 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE";
 
+    const E_SAMPLE: &str = "EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE";
+
+    const A_SAMPLE: &str = "AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA";
+
     #[test]
     fn test_part1() {
         assert_eq!(part1(SMALL), 140);
@@ -173,5 +188,10 @@ MMMISSJEEE";
     fn test_part2() {
         assert_eq!(part2(SMALL), 80);
         assert_eq!(part2(LARGE), 1206);
+    }
+
+    #[test]
+    fn tmp() {
+        assert_eq!(part2(A_SAMPLE), 368);
     }
 }
