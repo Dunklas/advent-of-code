@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
@@ -7,7 +9,7 @@ use std::str::FromStr;
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input, 103, 101));
-    println!("Part 2: {}", part2(input));
+    println!("Part 2: {}", part2(input, 103, 101));
 }
 
 fn part1(input: &str, y_len: usize, x_len: usize) -> usize {
@@ -18,7 +20,7 @@ fn part1(input: &str, y_len: usize, x_len: usize) -> usize {
         .collect::<Result<Vec<Guard>, ParseIntError>>()
         .unwrap();
     guards.iter_mut().for_each(|g| {
-        simulate(g, 100, &grid);
+        simulate2(g, 100, &grid);
     });
     let mid_y = (y_len / 2) as isize;
     let mid_x = (x_len / 2) as isize;
@@ -47,27 +49,51 @@ fn part1(input: &str, y_len: usize, x_len: usize) -> usize {
     tl * tr * bl * br
 }
 
-fn part2(input: &str) -> usize {
+fn part2(input: &str, y_len: usize, x_len: usize) -> usize {
+    let grid = Grid::new_with(y_len, x_len, '.');
+    let mut guards = input
+        .lines()
+        .map(Guard::from_str)
+        .collect::<Result<Vec<Guard>, ParseIntError>>()
+        .unwrap();
+
+    for second in 1..10000 {
+        guards.iter_mut().for_each(|g| {
+            simulate2(g, 1, &grid);
+        });
+        let counts: HashMap<Coordinate, usize> = guards.iter().fold(HashMap::new(), |mut acc, x| {
+            *acc.entry(x.pos).or_default() += 1;
+            acc
+        });
+
+        let mut str = String::new();
+        for y in 0..grid.y_len() {
+            for x in 0..grid.x_len() {
+                str.push(match counts.get(&Coordinate::new(y as isize, x as isize)) {
+                    Some(_) => {
+                        '#'
+                    },
+                    None => '.'
+                });
+            }
+            str.push('\n');
+        }
+
+        // 278 is wrong but I can see the tree :(
+        if str.contains("############") {
+            println!("{}", str);
+            println!("Secs: {}", second);
+        }
+    }
     0
 }
 
-pub fn simulate(guard: &mut Guard, seconds: usize, grid: &Grid<char>) {
-    for _ in 0..seconds {
-        let mut next = Coordinate::new(guard.pos.y + guard.vel.dy, guard.pos.x + guard.vel.dx);
-        if next.y < 0 {
-            next.y = grid.y_len() as isize - next.y.abs_diff(0) as isize;
-        }
-        if next.y >= grid.y_len() as isize {
-            next.y = 0 + next.y.abs_diff(grid.y_len() as isize) as isize;
-        }
-        if next.x < 0 {
-            next.x = grid.x_len() as isize - next.x.abs_diff(0) as isize;
-        }
-        if next.x >= grid.x_len() as isize {
-            next.x = 0 + next.x.abs_diff(grid.x_len() as isize) as isize;
-        }
-        guard.pos = next;
-    }
+pub fn simulate2(guard: &mut Guard, seconds: usize, grid: &Grid<char>) {
+    let new_y = ((guard.pos.y + guard.vel.dy * seconds as isize) % grid.y_len() as isize
+                 + grid.y_len() as isize) % grid.y_len() as isize;
+    let new_x = ((guard.pos.x + guard.vel.dx * seconds as isize) % grid.x_len() as isize
+                 + grid.x_len() as isize) % grid.x_len() as isize;
+    guard.pos = Coordinate::new(new_y, new_x);
 }
 
 #[derive(Debug)]
@@ -115,6 +141,6 @@ p=9,5 v=-3,-3";
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0)
+        assert_eq!(part2(INPUT, 7, 11), 0)
     }
 }
