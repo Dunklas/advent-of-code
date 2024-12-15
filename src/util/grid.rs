@@ -1,6 +1,8 @@
 use crate::util::coordinate::Coordinate;
 use itertools::Itertools;
 use std::fmt::{Debug, Display, Formatter};
+use std::mem;
+use std::mem::swap;
 use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Eq)]
@@ -8,7 +10,7 @@ pub struct Grid<T> {
     grid: Vec<Vec<T>>,
 }
 
-impl<T: Copy + PartialEq<T>> Grid<T> {
+impl<T: Copy + Default + PartialEq<T>> Grid<T> {
     pub fn new(grid: Vec<Vec<T>>) -> Self {
         assert!(grid.iter().map(|row| row.len()).all_equal());
         Self { grid }
@@ -28,6 +30,18 @@ impl<T: Copy + PartialEq<T>> Grid<T> {
                 Some(prev)
             }
             false => None,
+        }
+    }
+
+    pub fn swap(&mut self, a: &Coordinate, b: &Coordinate) -> Option<()> {
+        match (self.contains(a), self.contains(b)) {
+            (true, true) => {
+                let a_value = mem::take(&mut self.grid[a.y as usize][a.x as usize]);
+                let b_value = mem::replace(&mut self.grid[b.y as usize][b.x as usize], a_value);
+                self.grid[a.y as usize][a.x as usize] = b_value;
+                Some(())
+            }
+            _ => None,
         }
     }
 
@@ -92,7 +106,7 @@ pub struct ParseGridError {}
 
 impl<T> FromStr for Grid<T>
 where
-    T: FromStr + Copy + PartialEq<T>,
+    T: FromStr + Default + Copy + PartialEq<T>,
 {
     type Err = ParseGridError;
 
@@ -144,7 +158,7 @@ where
 
 impl<'a, T> Iterator for GridIterator<'a, T>
 where
-    T: Copy + PartialEq<T>,
+    T: Copy + Default + PartialEq<T>,
 {
     type Item = (Coordinate, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
