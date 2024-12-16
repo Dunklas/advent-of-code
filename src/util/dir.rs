@@ -27,4 +27,14 @@ impl Direction {
             _ => unreachable!(),
         }
     }
+
+    pub fn rotated_left(&self) -> Direction {
+        match (self.dy, self.dx) {
+            (-1, 0) => Direction::new(0, -1),
+            (0, -1) => Direction::new(1, 0),
+            (1, 0) => Direction::new(0, 1),
+            (0, 1) => Direction::new(-1, 0),
+            _ => unreachable!(),
+        }
+    }
 }
