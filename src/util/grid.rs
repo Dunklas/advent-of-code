@@ -2,7 +2,6 @@ use crate::util::coordinate::Coordinate;
 use itertools::Itertools;
 use std::fmt::{Debug, Display, Formatter};
 use std::mem;
-use std::mem::swap;
 use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Eq)]
