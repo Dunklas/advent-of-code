@@ -119,6 +119,11 @@ impl Computer {
         self.instructions.get(self.p + 1).copied()
     }
 
+    fn reset(&mut self) {
+        self.p = 0;
+        self.out.clear();
+    }
+
     fn combo(&self) -> Option<isize> {
         let op = self.instructions.get(self.p + 1)?;
         Some(match op {
@@ -138,19 +143,23 @@ impl Computer {
 mod tests {
     use super::*;
 
-    const INPUT: &str = "Register A: 729
+    #[test]
+    fn test_part1() {
+        let input = "Register A: 729
 Register B: 0
 Register C: 0
 
 Program: 0,1,5,4,3,0";
-
-    #[test]
-    fn test_part1() {
-        assert_eq!(part1(INPUT), "4,6,3,5,6,3,5,2,1,0");
+        assert_eq!(part1(input), "4,6,3,5,6,3,5,2,1,0");
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        let input = "Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0";
+        assert_eq!(part2(input), 117440);
     }
 }
