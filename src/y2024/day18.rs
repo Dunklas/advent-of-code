@@ -1,5 +1,9 @@
+use std::collections::{HashSet, VecDeque};
 use crate::util::coordinate::Coordinate;
+use crate::util::dir::Direction;
 use crate::util::grid::Grid;
+
+const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input, 71, 1024));
@@ -13,12 +17,38 @@ fn part1(input: &str, size: usize, sim_len: usize) -> usize {
         .for_each(|byte_pos| {
             grid.replace(&byte_pos, '#');
         });
-    println!("{:?}", grid);
-    0
+    let target = Coordinate::new(size as isize -1, size as isize- 1);
+    let path = shortes_path(&grid, &target).unwrap();
+    path
 }
 
 fn part2(input: &str) -> usize {
     0
+}
+
+fn shortes_path(grid: &Grid<char>, target: &Coordinate) -> Option<usize> {
+    let mut stack = VecDeque::new();
+    let mut visited = HashSet::new();
+    stack.push_back((Coordinate::new(0, 0), 0));
+    visited.insert(Coordinate::new(0, 0));
+    while let Some((curr, path_len)) = stack.pop_front() {
+        if curr == *target {
+            return Some(path_len);
+        }
+        match grid.get(&curr) {
+            Some('#') | None => continue,
+            _ => {}
+        }
+        for (dy, dx) in DIRECTIONS.iter() {
+            let next = Coordinate::new(curr.y + dy, curr.x + dx);
+            if visited.contains(&next) {
+                continue;
+            }
+            visited.insert(next);
+            stack.push_back((next, path_len + 1));
+        }
+    }
+    None
 }
 
 fn parse(input: &str) -> Vec<Coordinate> {
@@ -64,7 +94,7 @@ mod tests {
 0,5
 1,6
 2,0";
-        assert_eq!(part1(input, 8, 12), 22);
+        assert_eq!(part1(input, 7, 12), 22);
     }
 
     #[test]
