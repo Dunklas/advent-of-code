@@ -1,7 +1,7 @@
-use std::collections::{HashSet, VecDeque};
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
+use std::collections::{HashSet, VecDeque};
 
 const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
 
@@ -13,11 +13,10 @@ pub fn solve(input: &str) {
 fn part1(input: &str, size: usize, sim_len: usize) -> usize {
     let bytes = parse(input);
     let mut grid = Grid::<char>::new_with(size, size, '.');
-    bytes.into_iter().take(sim_len)
-        .for_each(|byte_pos| {
-            grid.replace(&byte_pos, '#');
-        });
-    let target = Coordinate::new(size as isize -1, size as isize- 1);
+    bytes.into_iter().take(sim_len).for_each(|byte_pos| {
+        grid.replace(&byte_pos, '#');
+    });
+    let target = Coordinate::new(size as isize - 1, size as isize - 1);
     let path = shortes_path(&grid, &target).unwrap();
     path
 }
@@ -25,7 +24,7 @@ fn part1(input: &str, size: usize, sim_len: usize) -> usize {
 fn part2(input: &str, size: usize) -> Option<Coordinate> {
     let bytes = parse(input);
     let mut grid = Grid::<char>::new_with(size, size, '.');
-    let target = Coordinate::new(size as isize -1, size as isize- 1);
+    let target = Coordinate::new(size as isize - 1, size as isize - 1);
     for byte in bytes {
         grid.replace(&byte, '#');
         if let None = shortes_path(&grid, &target) {
@@ -61,13 +60,11 @@ fn shortes_path(grid: &Grid<char>, target: &Coordinate) -> Option<usize> {
 }
 
 fn parse(input: &str) -> Vec<Coordinate> {
-    input.lines()
+    input
+        .lines()
         .map(|line| {
             let parts = line.split(",").collect::<Vec<_>>();
-            Coordinate::new(
-                parts[1].parse().unwrap(),
-                parts[0].parse().unwrap(),
-            )
+            Coordinate::new(parts[1].parse().unwrap(), parts[0].parse().unwrap())
         })
         .collect()
 }
