@@ -9,7 +9,7 @@ pub struct Grid<T> {
     grid: Vec<Vec<T>>,
 }
 
-impl<T: Copy + Default + PartialEq<T>> Grid<T> {
+impl<T: Copy + Default + Debug + PartialEq<T>> Grid<T> {
     pub fn new(grid: Vec<Vec<T>>) -> Self {
         assert!(grid.iter().map(|row| row.len()).all_equal());
         Self { grid }
@@ -116,7 +116,7 @@ pub struct ParseGridError {}
 
 impl<T> FromStr for Grid<T>
 where
-    T: FromStr + Default + Copy + PartialEq<T>,
+    T: FromStr + Default + Debug + Copy + PartialEq<T>,
 {
     type Err = ParseGridError;
 
@@ -159,7 +159,7 @@ impl<T: Display> Display for Grid<T> {
 
 pub struct GridIterator<'a, T>
 where
-    T: Copy + PartialEq<T>,
+    T: Copy + PartialEq<T> + Debug,
 {
     grid: &'a Grid<T>,
     y: usize,
@@ -168,7 +168,7 @@ where
 
 impl<'a, T> Iterator for GridIterator<'a, T>
 where
-    T: Copy + Default + PartialEq<T>,
+    T: Copy + Default + Debug + PartialEq<T>,
 {
     type Item = (Coordinate, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
