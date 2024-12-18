@@ -5,6 +5,10 @@ pub struct Direction {
 }
 
 impl Direction {
+    pub const UP: Direction = Direction { dy: -1, dx: 0 };
+    pub const DOWN: Direction = Direction { dy: 1, dx: 0 };
+    pub const LEFT: Direction = Direction { dy: 0, dx: -1 };
+    pub const RIGHT: Direction = Direction { dy: 0, dx: 1 };
     pub fn new(dy: isize, dx: isize) -> Direction {
         Self { dy, dx }
     }
