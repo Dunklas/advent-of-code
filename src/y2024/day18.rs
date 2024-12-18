@@ -7,7 +7,7 @@ const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input, 71, 1024));
-    println!("Part 2: {}", part2(input));
+    println!("Part 2: {:?}", part2(input, 71));
 }
 
 fn part1(input: &str, size: usize, sim_len: usize) -> usize {
@@ -22,8 +22,17 @@ fn part1(input: &str, size: usize, sim_len: usize) -> usize {
     path
 }
 
-fn part2(input: &str) -> usize {
-    0
+fn part2(input: &str, size: usize) -> Option<Coordinate> {
+    let bytes = parse(input);
+    let mut grid = Grid::<char>::new_with(size, size, '.');
+    let target = Coordinate::new(size as isize -1, size as isize- 1);
+    for byte in bytes {
+        grid.replace(&byte, '#');
+        if let None = shortes_path(&grid, &target) {
+            return Some(byte);
+        }
+    }
+    None
 }
 
 fn shortes_path(grid: &Grid<char>, target: &Coordinate) -> Option<usize> {
@@ -67,9 +76,7 @@ fn parse(input: &str) -> Vec<Coordinate> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_part1() {
-        let input = "5,4
+    const INPUT: &str = "5,4
 4,2
 4,5
 3,0
@@ -94,12 +101,14 @@ mod tests {
 0,5
 1,6
 2,0";
-        assert_eq!(part1(input, 7, 12), 22);
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT, 7, 12), 22);
     }
 
     #[test]
     fn test_part2() {
-        let input = "";
-        assert_eq!(part2(input), 0);
+        assert_eq!(part2(INPUT, 7), Some(Coordinate::new(1, 6)));
     }
 }
