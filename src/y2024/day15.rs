@@ -48,7 +48,7 @@ impl WarehouseMap {
 
     fn try_move_thing(&mut self, source: &Coordinate, dir: &Direction, apply: bool) -> bool {
         let next = Coordinate::new(source.y + dir.dy, source.x + dir.dx);
-        let x = match self.grid.get(&next) {
+        let move_successful = match self.grid.get(&next) {
             Some('.') => true,
             Some('O') => self.try_move_thing(&next, dir, apply),
             Some('#') => false,
@@ -62,15 +62,10 @@ impl WarehouseMap {
             },
             _ => unreachable!(),
         };
-
-        if x {
-            if apply {
-                self.grid.swap(source, &next);
-            }
-            true
-        } else {
-            false
+        if move_successful && apply {
+            self.grid.swap(source, &next);
         }
+        move_successful
     }
 
     fn try_move_big_box(
