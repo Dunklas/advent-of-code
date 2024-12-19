@@ -89,9 +89,7 @@ impl Trie {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_part1() {
-        let input = "r, wr, b, g, bwu, rb, gb, br
+    const INPUT: &str = "r, wr, b, g, bwu, rb, gb, br
 
 brwrr
 bggr
@@ -101,12 +99,14 @@ ubwu
 bwurrg
 brgr
 bbrgwb";
-        assert_eq!(part1(input), 6);
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), 6);
     }
 
     #[test]
     fn test_part2() {
         let input = "";
-        assert_eq!(part2(input), 0);
+        assert_eq!(part2(INPUT), 16);
     }
 }
