@@ -9,14 +9,11 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let machines = parse(input);
-    for machine in machines {
-        if let Some((a, b)) = find_prize(&machine) {
-            if (a % 2 == 0) && b % 2 == 0 {
-
-            }
-            println!("{}, {}", a, b);
-        }
-    }
+    machines.into_iter()
+        .filter_map(|machine| find_prize(&machine))
+        .for_each(|val| {
+            println!("{:?}", val)
+        });
     0
 }
 
@@ -25,12 +22,21 @@ fn part2(input: &str) -> usize {
 }
 
 fn find_prize(machine: &Machine) -> Option<(f64, f64)> {
-    // X * machine.a.dy + Y * machine.b.dy = prize.y
-    // X * machine.a.dx + Y * machine.b.dx = prize.x
-    // TODO: Solve X and Y
-    // Solve X
-    let tmp_price = machine.prize
-    None
+    let a = machine.a.dx as f64;
+    let b = machine.b.dy as f64;
+    let c = machine.b.dx as f64;
+    let d = machine.a.dy as f64;
+    let main = determinant(a, b, c, d);
+    if main == 0.0 {
+        return None;
+    }
+    let y = determinant(machine.prize.x as f64, b, machine.prize.y as f64, d) / main;
+    let x = determinant(a, machine.prize.x as f64, c, machine.prize.y as f64) / main;
+    Some((y, x))
+}
+
+fn determinant(a: f64, b: f64, c: f64, d: f64) -> f64 {
+    (a * d) - (b * c)
 }
 
 #[derive(Debug)]
