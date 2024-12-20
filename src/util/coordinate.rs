@@ -1,9 +1,23 @@
+use std::cmp::Ordering;
 use std::ops::{Add, Neg, Sub};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Coordinate {
     pub y: isize,
     pub x: isize,
+}
+
+impl Ord for Coordinate {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.y.cmp(&other.y)
+            .then_with(|| self.x.cmp(&other.x))
+    }
+}
+
+impl PartialOrd for Coordinate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Coordinate {
