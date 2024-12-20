@@ -1,6 +1,7 @@
+use std::cmp::Ordering;
 use crate::util::coordinate::Coordinate;
 use crate::util::grid::Grid;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::str::FromStr;
 
 const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
@@ -14,91 +15,58 @@ fn part1(input: &str, save_cap: usize) -> usize {
     let mut track = Grid::<char>::from_str(input).unwrap();
     let end = track.find(&'E').unwrap();
     let start = track.find(&'S').unwrap();
-    let base_shortest = shortest_path(&track, &start, &end).unwrap();
-    let base_len = base_shortest.len();
-    let mut cheats: usize = 0;
-    let mut wall_removals = HashSet::new();
-    for (i, coord) in base_shortest.iter().enumerate() {
-        let mut cheat_pos = Vec::new();
-        for (dy, dx) in DIRECTIONS.iter() {
-            let candidate = Coordinate::new(coord.y + dy, coord.x + dx);
-            if wall_removals.contains(&candidate) {
-                continue;
-            }
-            let segment = track.get_segment(coord, *dx, *dy, 3);
-            if segment.len() == 3 && segment[1] == '#' && (segment[2] == '.' || segment[2] == 'E') {
-                cheat_pos.push(candidate);
-            }
-        };
-        for pos in cheat_pos {
-            wall_removals.insert(pos);
-            track.replace(&pos, '.');
-            if let Some(new_path_len) = shortest_path_len(&track, coord, &end) {
-                let old = base_len - i - 1;
-                if new_path_len < old {
-                    if old - new_path_len >= save_cap {
-                        cheats += 1;
-                    }
-                }
-            }
-            track.replace(&pos, '#');
-        }
-    }
-    cheats
+    let result = shortest_path(&track, &start, &end).unwrap();
+    println!("{:?}", result.get(&end).unwrap());
+    0
 }
 
 fn part2(input: &str) -> usize {
     0
 }
 
-fn shortest_path_len(grid: &Grid<char>, start: &Coordinate, end: &Coordinate) -> Option<usize> {
-    let mut stack = VecDeque::new();
-    let mut visited = HashSet::new();
-    stack.push_back((*start, 0));
-    visited.insert(Coordinate::new(0, 0));
-    while let Some((curr, path_len)) = stack.pop_front() {
-        if curr == *end {
-            return Some(path_len);
-        }
-        match grid.get(&curr) {
-            Some('#') | None => continue,
-            _ => {}
-        }
-        for (dy, dx) in DIRECTIONS.iter() {
-            let next = Coordinate::new(curr.y + dy, curr.x + dx);
-            if visited.contains(&next) {
-                continue;
-            }
-            visited.insert(next);
-            stack.push_back((next, path_len + 1));
-        }
-    }
-    None
+#[derive(Copy, Clone, Eq, PartialEq)]
+struct State {
+    cost: usize,
+    position: Coordinate,
 }
 
-fn shortest_path(grid: &Grid<char>, start: &Coordinate, end: &Coordinate) -> Option<Vec<Coordinate>> {
-    let mut stack = VecDeque::new();
-    let mut visited = HashSet::new();
-    stack.push_back((vec![*start]));
-    visited.insert(Coordinate::new(0, 0));
-    while let Some(path) = stack.pop_front() {
-        if let Some(curr) = path.last() {
-            if curr == end {
-                return Some(path);
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+            .then_with(|| self.position.cmp(&other.position))
+    }
+}
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn shortest_path(grid: &Grid<char>, start: &Coordinate, end: &Coordinate) -> Option<HashMap<Coordinate, usize>> {
+    let mut dist = grid.coordinates().map(|c| (c, usize::MAX)).collect::<HashMap<_, _>>();
+    let mut heap = BinaryHeap::new();
+    dist.insert(*start, 0);
+    heap.push(State { cost: 0, position: *start });
+    while let Some(State { cost, position }) = heap.pop() {
+        if position == *end {
+            return Some(dist);
+        }
+        if let Some('#') = grid.get(&position) {
+            continue;
+        }
+        if let Some(prev_cost) = dist.get(&position) {
+            if cost > *prev_cost {
+                continue;
             }
-            match grid.get(&curr) {
-                Some('#') | None => continue,
-                _ => {}
-            }
-            for (dy, dx) in DIRECTIONS.iter() {
-                let next = Coordinate::new(curr.y + dy, curr.x + dx);
-                if visited.contains(&next) {
-                    continue;
+        }
+        for (dy, dx) in &DIRECTIONS {
+            let next = Coordinate::new(position.y + dy, position.x + dx);
+            let next = State { cost: cost + 1, position: next};
+            if let Some(prev_next_cost) = dist.get(&next.position) {
+                if next.cost < *prev_next_cost {
+                    heap.push(next);
+                    dist.insert(next.position, next.cost);
                 }
-                visited.insert(next);
-                let mut path = path.clone();
-                path.push(next);
-                stack.push_back(path);
             }
         }
     }
