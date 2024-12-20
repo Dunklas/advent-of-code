@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use crate::util::coordinate::Coordinate;
 use crate::util::grid::Grid;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap};
 use std::str::FromStr;
 
 const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
@@ -15,13 +15,49 @@ fn part1(input: &str, save_cap: usize) -> usize {
     let mut track = Grid::<char>::from_str(input).unwrap();
     let end = track.find(&'E').unwrap();
     let start = track.find(&'S').unwrap();
-    let result = shortest_path(&track, &start, &end).unwrap();
-    println!("{:?}", result.get(&end).unwrap());
-    0
+    let path = shortest_path(&track, &start, &end).unwrap().into_iter()
+        .filter(|(c, cost)| *cost < usize::MAX)
+        .filter(|(c, cost)| track.get(c) != Some(&'#'))
+        .collect::<HashMap<_, _>>();
+    let mut cheats = HashMap::new();
+    for (coord, cost) in path.iter() {
+        if *coord == end {
+            continue;
+        }
+        for (dst_coord, dst_len) in manhattan_destinations(coord, 2) {
+            if !path.contains_key(&dst_coord) {
+                continue;
+            }
+            // I get non-cheats here too :(
+            let old_cost = path.get(&dst_coord).unwrap();
+            let new_cost = cost + dst_len;
+            if new_cost < *old_cost {
+                cheats.insert((coord, dst_coord), old_cost - new_cost);
+            }
+        }
+    }
+    cheats.into_iter()
+        .filter(|(_, save)| *save >= save_cap)
+        .count()
 }
 
 fn part2(input: &str) -> usize {
     0
+}
+
+fn manhattan_destinations(source: &Coordinate, max_distance: isize) -> Vec<(Coordinate, usize)> {
+    let mut destinations = Vec::new();
+    for current_distance in 1..=max_distance {
+        for x_offset in -current_distance..=current_distance {
+            let y_offset_abs = current_distance - x_offset.abs();
+
+            destinations.push((Coordinate::new(source.y + y_offset_abs, source.x + x_offset), current_distance.abs() as usize));
+            if y_offset_abs != 0 {
+                destinations.push((Coordinate::new(source.y - y_offset_abs, source.x + x_offset), current_distance.abs() as usize));
+            }
+        }
+    }
+    destinations
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
