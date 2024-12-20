@@ -8,7 +8,7 @@ const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input, 100));
-    println!("Part 2: {}", part2(input));
+    println!("Part 2: {}", part2(input, 100));
 }
 
 fn part1(input: &str, save_cap: usize) -> usize {
@@ -41,8 +41,34 @@ fn part1(input: &str, save_cap: usize) -> usize {
         .count()
 }
 
-fn part2(input: &str) -> usize {
-    0
+fn part2(input: &str, save_cap: usize) -> usize {
+    let mut track = Grid::<char>::from_str(input).unwrap();
+    let end = track.find(&'E').unwrap();
+    let start = track.find(&'S').unwrap();
+    let path = shortest_path(&track, &start, &end).unwrap().into_iter()
+        .filter(|(c, cost)| *cost < usize::MAX)
+        .filter(|(c, cost)| track.get(c) != Some(&'#'))
+        .collect::<HashMap<_, _>>();
+    let mut cheats = HashMap::new();
+    for (coord, cost) in path.iter() {
+        if *coord == end {
+            continue;
+        }
+        for (dst_coord, dst_len) in manhattan_destinations(coord, 20) {
+            if !path.contains_key(&dst_coord) {
+                continue;
+            }
+            // I get non-cheats here too :(
+            let old_cost = path.get(&dst_coord).unwrap();
+            let new_cost = cost + dst_len;
+            if new_cost < *old_cost {
+                cheats.insert((coord, dst_coord), old_cost - new_cost);
+            }
+        }
+    }
+    cheats.into_iter()
+        .filter(|(_, save)| *save >= save_cap)
+        .count()
 }
 
 fn manhattan_destinations(source: &Coordinate, max_distance: isize) -> Vec<(Coordinate, usize)> {
@@ -131,5 +157,25 @@ mod tests {
 #...#...#...###
 ###############";
         assert_eq!(part1(input, 2), 44);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = "###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############";
+        assert_eq!(part2(input, 50), 285);
     }
 }
