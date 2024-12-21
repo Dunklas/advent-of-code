@@ -1,7 +1,7 @@
 use crate::util::coordinate::Coordinate;
 use crate::util::grid::Grid;
 use itertools::{all, iproduct, Itertools};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::ops::Add;
 use std::str::FromStr;
 
@@ -13,48 +13,78 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
+    let mut cache = HashMap::new();
     let mut complexity = 0;
     let keypads = vec![keypad(), keypad(), numpad()];
     for line in input.lines() {
         let num = line.replace("A", "");
         let mut line = line.clone().to_owned();
         line.insert(0, 'A');
-        let mut result = String::new();
+        let mut result = 0;
         for pair in line.chars().collect::<Vec<_>>().windows(2) {
-            let part = find_best(&keypads, pair, 2).unwrap();
-            result.push_str(&part);
+            let part = find_best(&keypads, pair[0], pair[1], 2, &mut cache).unwrap();
+            result += part;
         }
         let num = num.parse::<usize>().unwrap();
-        complexity += num * result.len();
+        complexity += num * result;
     }
     complexity
 }
 
-fn find_best(keypads: &Vec<ButtonPanel>, mut value: &[char], depth: usize) -> Option<String> {
-    assert_eq!(value.len(), 2);
+fn part2(input: &str) -> usize {
+    let mut cache = HashMap::new();
+    let mut complexity = 0;
+    let mut keypads = vec![numpad()];
+    for i in 0..25 {
+        keypads.insert(0, keypad());
+    }
+    for line in input.lines() {
+        let num = line.replace("A", "");
+        let mut line = line.clone().to_owned();
+        line.insert(0, 'A');
+        let mut result = 0;
+        for pair in line.chars().collect::<Vec<_>>().windows(2) {
+            let part = find_best(&keypads, pair[0], pair[1], 25, &mut cache).unwrap();
+            result += part;
+        }
+        let num = num.parse::<usize>().unwrap();
+        complexity += num * result;
+    }
+    complexity
+}
+
+
+fn find_best(keypads: &Vec<ButtonPanel>, a: char, b: char, depth: usize, cache: &mut HashMap<(char, char, usize), usize>) -> Option<usize> {
+    if let Some(val) = cache.get(&(a, b, depth)) {
+        return Some(val.clone());
+    }
     let keypad = match keypads.get(depth) {
         Some(keypad) => keypad,
         None => unreachable!(""),
     };
-    let mut paths = keypad.get_key_presses(value[0], value[1]);
+    let mut paths = keypad.get_key_presses(a, b);
     paths.iter_mut().for_each(|p| {
         p.push('A');
     });
     if (depth == 0) {
-        return Some(paths.first().unwrap().clone());
+        return Some(paths.first().unwrap().len());
     }
-    paths
+    let return_val = paths
         .into_iter()
         .map(|mut s| {
-            let mut tmp = String::new();
             s.insert_str(0, "A");
+            let mut tmp = 0;
             for c in s.chars().collect::<Vec<_>>().windows(2) {
-                let x = find_best(keypads, c, depth -1).unwrap();
-                tmp.push_str(&x);
+                tmp += find_best(keypads, c[0], c[1], depth -1, cache).unwrap();
             }
             tmp
         })
-        .min_by_key(|x| x.len())
+        .min();
+    if let Some(return_val) = return_val {
+        cache.insert((a, b, depth), return_val);
+        return Some(return_val);
+    }
+    None
 }
 
 fn to_button_sequence(presses: Vec<Vec<char>>) -> String {
@@ -65,10 +95,6 @@ fn to_button_sequence(presses: Vec<Vec<char>>) -> String {
         .join("A");
     tmp.push('A');
     tmp
-}
-
-fn part2(input: &str) -> usize {
-    0
 }
 
 fn numpad() -> ButtonPanel {
