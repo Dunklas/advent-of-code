@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet};
 use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
@@ -8,28 +8,20 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let graph = parse(input);
-    let mut cycles = Vec::new();
-    graph.nodes().into_iter()
-        .flat_map(|id| graph.has_cycle_with_depth(id, 2))
-        .filter(|cycles| cycles.len() > 0)
-        .for_each(|path| {
-            if !cycles.contains(&path) && path.len() > 2 {
-                cycles.push(path);
-            }
-        });
-    let mut cycles = cycles.into_iter()
-        .filter(|x| x.iter().any(|n| n.starts_with("t")))
-        .map(|mut c| {
-        c.sort();
-        c.join(",")
-    }).collect::<Vec<_>>();
-    cycles.sort();
-    cycles.dedup();
-    cycles.len()
+    graph
+        .nodes()
+        .into_iter()
+        .filter(|node| node.starts_with("t"))
+        .flat_map(|node| graph.find_paths(node, node, 3))
+        .unique()
+        .count()
 }
 
-fn part2(input: &str) -> usize {
-    0
+fn part2(input: &str) -> String {
+    let graph = parse(input);
+    let mut max_clique = graph.max_clique().unwrap();
+    max_clique.sort();
+    max_clique.into_iter().join(",")
 }
 
 fn parse(input: &str) -> Graph {
@@ -43,65 +35,73 @@ fn parse(input: &str) -> Graph {
 
 #[derive(Debug)]
 struct Graph {
-    nodes: HashMap<String, Vec<String>>
+    nodes: HashMap<String, HashSet<String>>,
 }
 
 impl Graph {
     pub fn new() -> Self {
-        Self { nodes: HashMap::new() }
+        Self {
+            nodes: HashMap::new(),
+        }
     }
 
     pub fn nodes(&self) -> Vec<&String> {
         self.nodes.keys().collect::<Vec<_>>()
     }
 
-    pub fn add_edge(&mut self, a: &str, b: &str) {
-        self.nodes.entry(a.to_owned()).or_insert_with(Vec::new).push(b.to_owned());
-        self.nodes.entry(b.to_owned()).or_insert_with(Vec::new).push(a.to_owned());
-    }
+    pub fn find_paths(&self, start: &str, target: &str, depth: usize) -> HashSet<String> {
+        let mut paths = HashSet::new();
+        let mut stack = Vec::new();
+        stack.push(vec![start]);
 
-    fn has_cycle_with_depth(&self, start: &str, max_depth: usize) -> Vec<Vec<String>> {
-        let mut visited = HashSet::new();
-        let mut path = Vec::new();
-        let mut cycles = Vec::new();
-        self.find(start, None, &mut visited, &mut path, &mut cycles, 0, max_depth);
-        cycles
-    }
-
-    fn find(&self, current: &str, parent: Option<&str>, visited: &mut HashSet<String>, path: &mut Vec<String>, cycles: &mut Vec<Vec<String>>, depth: usize, max_depth: usize) -> Option<Vec<String>> {
-        if depth > max_depth {
-            return None;
-        }
-        visited.insert(current.to_string());
-        path.push(current.to_string());
-
-        if let Some(neighbours) = self.nodes.get(current) {
-            for neighbour in neighbours {
-                if Some(neighbour) == parent.map(|p| p.to_owned()).as_ref() {
+        while let Some(path) = stack.pop() {
+            let prev = path.last().unwrap();
+            if path.len() > depth {
+                continue;
+            }
+            for n in self.nodes[*prev].iter() {
+                let mut path = path.clone();
+                if n == target && depth == path.len() {
+                    path.sort();
+                    let path = path.join(",");
+                    paths.insert(path);
                     continue;
                 }
-                if visited.contains(neighbour) {
-                    let cycle_start = path.iter().position(|n| n == neighbour).unwrap();
-                    let cycle = path[cycle_start..].to_vec();
-
-                    let mut normalized_cycle = cycle.clone();
-                    normalized_cycle.sort();
-                    if !cycles.iter().any(|c| {
-                        let mut c_sorted = c.clone();
-                        c_sorted.sort();
-                        c_sorted == normalized_cycle
-                    }) {
-                        cycles.push(cycle);
-                    }
-                } else {
-                    self.find(neighbour, parent, visited, path, cycles, depth + 1, max_depth);
+                if !path.contains(&n.as_str()) {
+                    path.push(n);
+                    stack.push(path);
                 }
             }
         }
+        paths
+    }
 
-        visited.remove(current);
-        path.pop();
-        None
+    pub fn max_clique(&self) -> Option<Vec<&String>> {
+        let mut cliques = Vec::new();
+        for start in self.nodes() {
+            let mut clique = vec![start];
+            for (n, _) in self.nodes.iter() {
+                if n == start {
+                    continue;
+                }
+                if clique.iter().all(|m| self.nodes[*m].contains(n)) {
+                    clique.push(n);
+                }
+            }
+            cliques.push(clique);
+        }
+        cliques.into_iter().max_by(|a, b| a.len().cmp(&b.len()))
+    }
+
+    pub fn add_edge(&mut self, a: &str, b: &str) {
+        self.nodes
+            .entry(a.to_owned())
+            .or_default()
+            .insert(b.to_owned());
+        self.nodes
+            .entry(b.to_owned())
+            .or_default()
+            .insert(a.to_owned());
     }
 }
 
@@ -149,6 +149,6 @@ td-yn";
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        assert_eq!(part2(INPUT), "co,de,ka,ta");
     }
 }
