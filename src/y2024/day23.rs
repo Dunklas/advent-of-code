@@ -80,12 +80,15 @@ impl Graph {
         let mut cliques = Vec::new();
         for start in self.nodes() {
             let mut clique = vec![start];
-            for (n, _) in self.nodes.iter() {
-                if n == start {
+            for node in self.nodes() {
+                if node == start {
                     continue;
                 }
-                if clique.iter().all(|m| self.nodes[*m].contains(n)) {
-                    clique.push(n);
+                if clique
+                    .iter()
+                    .all(|c_node| self.nodes[*c_node].contains(node))
+                {
+                    clique.push(node);
                 }
             }
             cliques.push(clique);
