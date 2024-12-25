@@ -10,33 +10,13 @@ pub fn solve(input: &str) {
 fn part1(input: &str) -> usize {
     let machines = parse(input);
     machines.into_iter()
-        .filter_map(|machine| find_prize(&machine))
-        .for_each(|val| {
-            println!("{:?}", val)
-        });
-    0
+        .filter_map(|val| val.min_tokens())
+        .map(|(a, b)| a * 3 + b)
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
     0
-}
-
-fn find_prize(machine: &Machine) -> Option<(f64, f64)> {
-    let a = machine.a.dx as f64;
-    let b = machine.b.dy as f64;
-    let c = machine.b.dx as f64;
-    let d = machine.a.dy as f64;
-    let main = determinant(a, b, c, d);
-    if main == 0.0 {
-        return None;
-    }
-    let y = determinant(machine.prize.x as f64, b, machine.prize.y as f64, d) / main;
-    let x = determinant(a, machine.prize.x as f64, c, machine.prize.y as f64) / main;
-    Some((y, x))
-}
-
-fn determinant(a: f64, b: f64, c: f64, d: f64) -> f64 {
-    (a * d) - (b * c)
 }
 
 #[derive(Debug)]
@@ -44,6 +24,29 @@ struct Machine {
     a: Direction,
     b: Direction,
     prize: Coordinate
+}
+
+impl Machine {
+    fn min_tokens(&self) -> Option<(usize, usize)> {
+        let (a_x, a_y) = (self.a.dx as f64, self.a.dy as f64);
+        let (b_x, b_y) = (self.b.dx as f64, self.b.dy as f64);
+        let (p_x, p_y) = (self.prize.x as f64, self.prize.y as f64);
+
+        let det = a_x * b_y - a_y * b_x;
+        if det == 0.0 {
+            return None;
+        }
+
+        let cramer_a = p_x * b_y - p_y * b_x;
+        let cramer_b = a_x * p_y - a_y * p_x;
+        let a = cramer_a / det;
+        let b = cramer_b / det;
+
+        if a.fract() != 0.0 || b.fract() != 0.0 {
+            return None
+        }
+        Some((a as usize, b as usize))
+    }
 }
 
 fn parse(input:&str) -> Vec<Machine> {
