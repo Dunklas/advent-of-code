@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::{HashMap, VecDeque};
+use itertools::{iproduct, Itertools};
 
 lazy_static! {
     static ref WIRE: Regex = Regex::new(r"^([0-9a-z]{3}): (1|0)$").unwrap();
@@ -55,9 +56,39 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> String {
     let (input, gates) = parse(input);
+    let mut to_swap = gates.iter().enumerate().combinations(8).collect::<Vec<_>>();
+
+    let mut xes = HashMap::new();
+    let mut yes = HashMap::new();
+    let mut zes = HashMap::new();
 
     loop {
+        let mut gates = gates.clone();
         let mut wires = input.clone();
+        let x = to_swap.pop();
+        if x.is_none() {
+            break;
+        }
+        let swap = x.unwrap();
+
+        println!("Swap: {}", swap.len());
+        let tmp = gates[swap[0].0].3.clone();
+        gates[swap[0].0].3 = gates[swap[1].0].3.clone();
+        gates[swap[1].0].3 = tmp;
+
+        let tmp = gates[swap[2].0].3.clone();
+        gates[swap[2].0].3 = gates[swap[3].0].3.clone();
+        gates[swap[3].0].3 = tmp;
+
+        let tmp = gates[swap[4].0].3.clone();
+        gates[swap[4].0].3 = gates[swap[5].0].3.clone();
+        gates[swap[5].0].3 = tmp;
+
+        let tmp = gates[swap[6].0].3.clone();
+        gates[swap[6].0].3 = gates[swap[7].0].3.clone();
+        gates[swap[7].0].3 = tmp;
+
+
         let mut queue = gates.iter().collect::<VecDeque<_>>();
         while let Some(gate) = queue.pop_front() {
             let (op, a, b, out) = gate;
@@ -95,14 +126,26 @@ fn part2(input: &str) -> String {
             *wires.entry(out.clone()).or_default() = value;
         }
 
+
         let x = produce_number(&wires, "x");
+        xes.insert(x, swap.clone());
         let y = produce_number(&wires, "y");
+        yes.insert(y, swap.clone());
         let z = produce_number(&wires, "z");
-        if x + y == z {
-            break;
-        }
-        println!("{} + {} = {}", x, y, z);
+        zes.insert(z, swap.clone());
     }
+
+    let all_x = xes.keys().collect::<Vec<_>>();
+    let all_y = yes.keys().collect::<Vec<_>>();
+    let all_z = zes.keys().collect::<Vec<_>>();
+
+    iproduct!(all_x, all_y, all_z).into_iter()
+        .for_each(|(x, y, z)| {
+            println!("{} + {} = {}", x, y, z);
+            if x + y == *z {
+                println!("Found match!");
+            }
+        });
     String::new()
 }
 
