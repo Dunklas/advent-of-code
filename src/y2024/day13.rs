@@ -1,6 +1,15 @@
-use std::collections::{HashSet, VecDeque};
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
+use lazy_static::lazy_static;
+use regex::Regex;
+use std::str::FromStr;
+
+lazy_static! {
+    static ref BUTTON: Regex = Regex::new(r"^Button [AB]: X\+(\d+), Y\+(\d+)$").unwrap();
+    static ref PRIZE: Regex = Regex::new(r"^Prize: X=(\d+), Y=(\d+)$").unwrap();
+}
+
+const EPSILON: f64 = 1e-9;
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
@@ -8,22 +17,38 @@ pub fn solve(input: &str) {
 }
 
 fn part1(input: &str) -> usize {
-    let machines = parse(input);
-    machines.into_iter()
+    let machines = parse(input).unwrap();
+    machines
+        .into_iter()
         .filter_map(|val| val.min_tokens())
+        .filter(|&(a, b)| a <= 100 && b <= 100)
         .map(|(a, b)| a * 3 + b)
         .sum()
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let mut machines = parse(input).unwrap();
+    for machine in machines.iter_mut() {
+        machine.prize.x += 10000000000000;
+        machine.prize.y += 10000000000000;
+    }
+    machines
+        .into_iter()
+        .filter_map(|val| val.min_tokens())
+        .map(|(a, b)| a * 3 + b)
+        .sum()
+}
+
+fn parse(input: &str) -> Result<Vec<Machine>, ParseMachineError> {
+    let section = input.split("\n\n");
+    section.into_iter().map(Machine::from_str).collect()
 }
 
 #[derive(Debug)]
 struct Machine {
     a: Direction,
     b: Direction,
-    prize: Coordinate
+    prize: Coordinate,
 }
 
 impl Machine {
@@ -32,50 +57,48 @@ impl Machine {
         let (b_x, b_y) = (self.b.dx as f64, self.b.dy as f64);
         let (p_x, p_y) = (self.prize.x as f64, self.prize.y as f64);
 
-        let det = a_x * b_y - a_y * b_x;
-        if det == 0.0 {
+        let determinant = a_x * b_y - a_y * b_x;
+        if determinant.abs() < EPSILON {
             return None;
         }
 
         let cramer_a = p_x * b_y - p_y * b_x;
         let cramer_b = a_x * p_y - a_y * p_x;
-        let a = cramer_a / det;
-        let b = cramer_b / det;
+        let a = cramer_a / determinant;
+        let b = cramer_b / determinant;
 
         if a.fract() != 0.0 || b.fract() != 0.0 {
-            return None
+            return None;
         }
         Some((a as usize, b as usize))
     }
 }
 
-fn parse(input:&str) -> Vec<Machine> {
-    let section = input.split("\n\n");
-    section.into_iter().map(|section| {
-        let section = section.lines().collect::<Vec<_>>();
-        let a_raw = section[0].split(' ').collect::<Vec<_>>();
-        let a_x = a_raw[2].replace('X', "").replace(",", "");
-        let a_x = a_x.parse::<isize>().unwrap();
-        let a_y = a_raw[3].replace('Y', "");
-        let a_y = a_y.parse::<isize>().unwrap();
+#[derive(Debug)]
+struct ParseMachineError {}
+impl FromStr for Machine {
+    type Err = ParseMachineError;
 
-        let b_raw = section[1].split(' ').collect::<Vec<_>>();
-        let b_x = b_raw[2].replace('X', "").replace(",", "");
-        let b_x = b_x.parse::<isize>().unwrap();
-        let b_y = b_raw[3].replace('Y', "");
-        let b_y = b_y.parse::<isize>().unwrap();
-
-        let prize_raw = section[2].split(' ').collect::<Vec<_>>();
-        let price_x = prize_raw[1].replace("X=", "").replace(",", "").parse::<isize>().unwrap();
-        let price_y = prize_raw[2].replace("Y=", "").replace(",", "").parse::<isize>().unwrap();
-
-        Machine {
-            a: Direction::new(a_y, a_x),
-            b: Direction::new(b_y, b_x),
-            prize: Coordinate::new(price_y, price_x)
-        }
-    })
-        .collect()
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines = s.lines().collect::<Vec<_>>();
+        let a: (usize, usize) = BUTTON
+            .captures(lines[0])
+            .and_then(|cap| Some((cap[1].parse().ok()?, cap[2].parse().ok()?)))
+            .ok_or(ParseMachineError {})?;
+        let b: (usize, usize) = BUTTON
+            .captures(lines[1])
+            .and_then(|cap| Some((cap[1].parse().ok()?, cap[2].parse().ok()?)))
+            .ok_or(ParseMachineError {})?;
+        let prize: (usize, usize) = PRIZE
+            .captures(lines[2])
+            .and_then(|cap| Some((cap[1].parse().ok()?, cap[2].parse().ok()?)))
+            .ok_or(ParseMachineError {})?;
+        Ok(Self {
+            a: Direction::new(a.1 as isize, a.0 as isize),
+            b: Direction::new(b.1 as isize, b.0 as isize),
+            prize: Coordinate::new(prize.1 as isize, prize.0 as isize),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -105,6 +128,6 @@ Prize: X=18641, Y=10279";
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        assert_eq!(part2(INPUT), 875318608908);
     }
 }
