@@ -91,11 +91,11 @@ impl<T: Copy + Default + PartialEq<T>> Grid<T> {
         self.iter().map(|(_, value)| value)
     }
 
-    fn y_len(&self) -> usize {
+    pub fn y_len(&self) -> usize {
         self.grid.len()
     }
 
-    fn x_len(&self) -> usize {
+    pub fn x_len(&self) -> usize {
         self.grid[0].len()
     }
 }
