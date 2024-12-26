@@ -1,10 +1,15 @@
-use std::cmp::Ordering;
-use std::collections::{HashSet, VecDeque};
-use std::str::FromStr;
-use itertools::Itertools;
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
+use std::collections::HashSet;
+use std::str::FromStr;
+
+const DIRECTIONS: [Direction; 4] = [
+    Direction::UP,
+    Direction::DOWN,
+    Direction::LEFT,
+    Direction::RIGHT,
+];
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input));
@@ -14,135 +19,93 @@ pub fn solve(input: &str) {
 fn part1(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
     let mut visited: HashSet<Coordinate> = HashSet::new();
-    let mut rects: Vec<HashSet<Coordinate>> = Vec::new();
-    for coordinate in grid.coordinates() {
+    let mut price = 0;
+    grid.coordinates().for_each(|coordinate| {
         if visited.contains(&coordinate) {
-            continue;
+            return;
         }
-        if let Some(rect) = find_rect(&grid, &coordinate) {
-            visited.extend(rect.clone());
-            rects.push(rect);
+        if let Some(plot) = find_plot(&grid, &coordinate) {
+            price += perimeter(&plot) * plot.len();
+            visited.extend(plot);
         }
-    }
-    rects.into_iter()
-        .map(|r| perimeter(&r) * r.len())
-        .sum()
+    });
+    price
 }
 
 fn part2(input: &str) -> usize {
     let grid = Grid::<char>::from_str(input).unwrap();
     let mut visited: HashSet<Coordinate> = HashSet::new();
-    let mut rects: Vec<HashSet<Coordinate>> = Vec::new();
-    for coordinate in grid.coordinates() {
+    let mut price = 0;
+    grid.coordinates().for_each(|coordinate| {
         if visited.contains(&coordinate) {
-            continue;
+            return;
         }
-        if let Some(rect) = find_rect(&grid, &coordinate) {
-            visited.extend(rect.clone());
-            rects.push(rect);
+        if let Some(plot) = find_plot(&grid, &coordinate) {
+            price += num_corners(&plot) * plot.len();
+            visited.extend(plot.clone());
         }
-    }
-    rects.into_iter()
-        .map(|r| num_sides(&r) * r.len())
-        .sum()
+    });
+    price
 }
 
-fn find_rect(grid: &Grid<char>, start: &Coordinate) -> Option<HashSet<Coordinate>> {
+fn find_plot(grid: &Grid<char>, start: &Coordinate) -> Option<HashSet<Coordinate>> {
     let value = grid.get(start)?;
     let mut visited = HashSet::new();
-    let mut stack = VecDeque::from([*start]);
-    while let Some(n) = stack.pop_front() {
-        if visited.contains(&n) {
+    let mut stack = Vec::from([*start]);
+    while let Some(c) = stack.pop() {
+        if visited.contains(&c) {
             continue;
         }
-        if let Some(v) = grid.get(&n) {
+        if let Some(v) = grid.get(&c) {
             if v == value {
-                visited.insert(n);
-                stack.push_back(Coordinate::new(n.y - 1, n.x));
-                stack.push_back(Coordinate::new(n.y, n.x + 1));
-                stack.push_back(Coordinate::new(n.y + 1, n.x));
-                stack.push_back(Coordinate::new(n.y, n.x - 1));
+                visited.insert(c);
+                DIRECTIONS.iter().for_each(|dir| {
+                    stack.push(Coordinate::new(c.y + dir.dy, c.x + dir.dx));
+                });
             }
         }
     }
     Some(visited)
 }
 
-fn num_sides(rect: &HashSet<Coordinate>) -> usize {
-    let sorted = rect.iter().sorted_by(|a, b| match a.y.cmp(&b.y) {
-        Ordering::Equal => a.x.cmp(&b.x),
-        ord => ord
-    }).collect::<Vec<_>>();
-    let min_y = sorted.iter().map(|c| c.y).min().unwrap();
-    let max_y = sorted.iter().map(|c| c.y).max().unwrap();
-    let min_x = sorted.iter().map(|c| c.x).min().unwrap();
-    let max_x = sorted.iter().map(|c| c.x).max().unwrap();
-
-    let mut vertical_enters: Vec<(isize, isize)> = vec![];
-    let mut vertical_exits: Vec<(isize, isize)> = vec![];
-    let mut inside = false;
-    for y in (min_y - 1)..(max_y + 2) {
-        for x in (min_x - 1)..(max_x + 2) {
-            let c = Coordinate::new(y, x);
-            if rect.contains(&c) && !inside {
-                // Entered
-                inside = true;
-                if let Some(mut aaa) = vertical_enters.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
-                    aaa.1 = y;
-                } else {
-                    vertical_enters.push((x, y));
-                }
-            } else if !rect.contains(&c) && inside {
-                // Left
-                inside = false;
-                if let Some(aaa) = vertical_exits.iter_mut().find(|side| side.0 == x && side.1 == y - 1) {
-                    aaa.1 = y;
-                } else {
-                    vertical_exits.push((x, y));
-                }
-            }
-        }
-    }
-
-    let mut horizontal_enters: Vec<(isize, isize)> = vec![];
-    let mut horizontal_exits: Vec<(isize, isize)> = vec![];
-    let mut inside = false;
-    for x in (min_x - 1)..(max_x + 2) {
-        for y in (min_y - 1)..(max_y + 2) {
-            let c = Coordinate::new(y, x);
-            if rect.contains(&c) && !inside {
-                inside = true;
-                if let Some(mut aaa) = horizontal_enters.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
-                    aaa.1 = x;
-                } else {
-                    horizontal_enters.push((y, x));
-                }
-            } else if !rect.contains(&c) && inside {
-                // Left
-                inside = false;
-                if let Some(aaa) = horizontal_exits.iter_mut().find(|side| side.0 == y && side.1 == x - 1) {
-                    aaa.1 = x;
-                } else {
-                    horizontal_exits.push((y, x));
-                }
-            }
-        }
-    }
-    horizontal_enters.len() + vertical_enters.len() + horizontal_exits.len() + vertical_exits.len()
+fn num_corners(plot: &HashSet<Coordinate>) -> usize {
+    plot.iter()
+        .map(|c| {
+            let adjacent = [
+                c.offset(&Direction::UP),
+                c.offset(&Direction::RIGHT),
+                c.offset(&Direction::DOWN),
+                c.offset(&Direction::LEFT),
+            ];
+            let diagonals = [
+                c.offset(&Direction::TOP_RIGHT),
+                c.offset(&Direction::BOTTOM_RIGHT),
+                c.offset(&Direction::BOTTOM_LEFT),
+                c.offset(&Direction::TOP_LEFT),
+            ];
+            (0..4)
+                .filter(|&i| {
+                    (!plot.contains(&adjacent[i]) && !plot.contains(&adjacent[(i + 1) % 4]))
+                        || (plot.contains(&adjacent[i])
+                            && plot.contains(&adjacent[(i + 1) % 4])
+                            && !plot.contains(&diagonals[i]))
+                })
+                .count()
+        })
+        .sum()
 }
 
-fn perimeter(rect: &HashSet<Coordinate>) -> usize {
-    let mut rect_sum = 0;
-    let directions = vec![Direction::new(-1, 0), Direction::new(0, 1), Direction::new(1, 0), Direction::new(0, -1)];
-    for coord in rect.iter() {
-        for direction in directions.iter() {
-            let c = Coordinate::new(coord.y + direction.dy, coord.x + direction.dx);
-            if !rect.contains(&c) {
-                rect_sum += 1;
-            }
-        }
-    }
-    rect_sum
+fn perimeter(plot: &HashSet<Coordinate>) -> usize {
+    plot.iter()
+        .map(|c| {
+            DIRECTIONS.iter().fold(0, |acc, dir| {
+                match plot.contains(&Coordinate::new(c.y + dir.dy, c.x + dir.dx)) {
+                    true => acc,
+                    false => acc + 1,
+                }
+            })
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -165,19 +128,6 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE";
 
-    const E_SAMPLE: &str = "EEEEE
-EXXXX
-EEEEE
-EXXXX
-EEEEE";
-
-    const A_SAMPLE: &str = "AAAAAA
-AAABBA
-AAABBA
-ABBAAA
-ABBAAA
-AAAAAA";
-
     #[test]
     fn test_part1() {
         assert_eq!(part1(SMALL), 140);
@@ -188,10 +138,5 @@ AAAAAA";
     fn test_part2() {
         assert_eq!(part2(SMALL), 80);
         assert_eq!(part2(LARGE), 1206);
-    }
-
-    #[test]
-    fn tmp() {
-        assert_eq!(part2(A_SAMPLE), 368);
     }
 }

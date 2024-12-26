@@ -1,3 +1,4 @@
+use crate::util::dir::Direction;
 use std::ops::{Add, Neg, Sub};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -9,6 +10,10 @@ pub struct Coordinate {
 impl Coordinate {
     pub fn new(y: isize, x: isize) -> Coordinate {
         Self { y, x }
+    }
+
+    pub fn offset(&self, offset: &Direction) -> Coordinate {
+        Coordinate::new(self.y + offset.dy, self.x + offset.dx)
     }
 }
 
