@@ -47,7 +47,7 @@ fn find_best_paths(maze: &Grid<char>) -> Vec<(usize, Vec<Coordinate>)> {
     let mut best_paths = Vec::<(usize, Vec<Coordinate>)>::new();
     while let Some(state) = queue.pop_front() {
         let pos = state.path.last().unwrap();
-        let val = maze.get(&pos);
+        let val = maze.get(pos);
         if val == Some(&'E') {
             if state.cost < lowest_cost {
                 best_paths.clear();
