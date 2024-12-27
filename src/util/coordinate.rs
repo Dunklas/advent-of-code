@@ -1,4 +1,5 @@
 use crate::util::dir::Direction;
+use std::cmp::Ordering;
 use std::ops::{Add, Neg, Sub};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -14,6 +15,18 @@ impl Coordinate {
 
     pub fn offset(&self, offset: &Direction) -> Coordinate {
         Coordinate::new(self.y + offset.dy, self.x + offset.dx)
+    }
+}
+
+impl Ord for Coordinate {
+    fn cmp(&self, other: &Coordinate) -> Ordering {
+        other.y.cmp(&self.y).then_with(|| self.x.cmp(&other.x))
+    }
+}
+
+impl PartialOrd for Coordinate {
+    fn partial_cmp(&self, other: &Coordinate) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

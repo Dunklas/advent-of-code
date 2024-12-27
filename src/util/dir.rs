@@ -19,11 +19,21 @@ impl Direction {
     }
 
     pub fn rotated_right(&self) -> Direction {
-        match (self.dy, self.dx) {
-            (-1, 0) => Direction::new(0, 1),
-            (0, 1) => Direction::new(1, 0),
-            (1, 0) => Direction::new(0, -1),
-            (0, -1) => Direction::new(-1, 0),
+        match *self {
+            Direction::UP => Direction::RIGHT,
+            Direction::RIGHT => Direction::DOWN,
+            Direction::DOWN => Direction::LEFT,
+            Direction::LEFT => Direction::UP,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn rotated_left(&self) -> Direction {
+        match *self {
+            Direction::UP => Direction::LEFT,
+            Direction::LEFT => Direction::DOWN,
+            Direction::DOWN => Direction::RIGHT,
+            Direction::RIGHT => Direction::UP,
             _ => unreachable!(),
         }
     }
