@@ -8,56 +8,51 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> String {
     let mut comp = Computer::from_str(input).unwrap();
-    while let Some(_) = comp.run() {}
-    let x = comp
-        .out
+    while comp.run().is_some() {}
+    comp.out
         .into_iter()
         .map(|x| x.to_string())
-        .collect::<Vec<_>>();
-    x.join(",")
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 fn part2(input: &str) -> usize {
-    let mut comp = Computer::from_str(input).unwrap();
+    let comp = Computer::from_str(input).unwrap();
     let initial_a = comp.registers[0];
-    let expected_out = comp
-        .instructions
-        .iter()
-        .map(|x| *x as isize)
-        .collect::<Vec<_>>();
+    let expected_out = comp.instructions.to_vec();
 
     let mut matched = 0;
-    let mut tmp = 1;
+    let mut candidate = 1;
     loop {
-        if tmp == (initial_a as usize) {
+        if candidate == initial_a {
             continue;
         }
-        let mut comp = Computer::from_str(input).unwrap();
-        comp.registers[0] = tmp as isize;
-        while let Some(_) = comp.run() {}
-        let exp_tail = expected_out.iter().rev().take(matched + 1).collect::<Vec<_>>();
-        let act_tail = comp.out.iter().rev().take(matched + 1).collect::<Vec<_>>();
+        let mut comp = comp.clone();
+        comp.registers[0] = candidate;
+        while comp.run().is_some() {}
         if comp.out == expected_out {
             break;
         }
+        let exp_tail = &expected_out[expected_out.len().saturating_sub(matched + 1)..];
+        let act_tail = &comp.out[comp.out.len().saturating_sub(matched + 1)..];
         if exp_tail == act_tail {
-            tmp *= 8;
+            candidate *= 8;
             if matched < expected_out.len() {
                 matched += 1;
             }
         } else {
-            tmp += 1;
+            candidate += 1;
         }
     }
-    tmp
+    candidate
 }
 
 #[derive(Debug, Clone)]
 struct Computer {
-    registers: Vec<isize>,
+    registers: [usize; 3],
     instructions: Vec<usize>,
-    p: usize,
-    out: Vec<isize>,
+    instruction_pointer: usize,
+    out: Vec<usize>,
 }
 
 impl FromStr for Computer {
@@ -66,18 +61,18 @@ impl FromStr for Computer {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.split("\n\n").collect::<Vec<_>>();
         let registers = s[0].lines().collect::<Vec<_>>();
-        let a = registers[0].replace("Register A: ", "").parse::<isize>()?;
-        let b = registers[1].replace("Register B: ", "").parse::<isize>()?;
-        let c = registers[2].replace("Register C: ", "").parse::<isize>()?;
+        let a = registers[0].replace("Register A: ", "").parse()?;
+        let b = registers[1].replace("Register B: ", "").parse()?;
+        let c = registers[2].replace("Register C: ", "").parse()?;
         let instructions = s[1]
             .replace("Program: ", "")
             .split(",")
             .map(|x| x.parse::<usize>())
             .collect::<Result<Vec<usize>, _>>()?;
         Ok(Self {
-            registers: vec![a, b, c],
+            registers: [a, b, c],
             instructions,
-            p: 0,
+            instruction_pointer: 0,
             out: Vec::new(),
         })
     }
@@ -85,61 +80,45 @@ impl FromStr for Computer {
 
 impl Computer {
     pub fn run(&mut self) -> Option<()> {
-        if let Some(op) = self.instructions.get(self.p) {
-            match *op {
-                0 => {
-                    let num = self.registers[0];
-                    let op = self.combo()?;
-                    let denominator = 2isize.pow(op as u32);
-                    self.registers[0] = num / denominator;
-                    self.p += 2;
+        if let Some(&opcode) = self.instructions.get(self.instruction_pointer) {
+            match OpCode::from(opcode) {
+                OpCode::Adv => {
+                    self.registers[0] /= 2usize.pow(self.combo()? as u32);
+                    self.instruction_pointer += 2;
                 }
-                1 => {
-                    let op = self.literal()?;
-                    self.registers[1] = self.registers[1] ^ op as isize;
-                    self.p += 2;
+                OpCode::Bxl => {
+                    self.registers[1] ^= self.literal()?;
+                    self.instruction_pointer += 2;
                 }
-                2 => {
-                    let op = self.combo()?;
-                    self.registers[1] = op % 8;
-                    self.p += 2;
+                OpCode::Bst => {
+                    self.registers[1] = self.combo()? % 8;
+                    self.instruction_pointer += 2;
                 }
-                3 => {
-                    let op = self.literal()?;
-                    match self.registers[0] {
-                        0 => {
-                            self.p += 2;
-                        }
-                        _ => {
-                            self.p = op;
-                        }
+                OpCode::Jnz => match self.registers[0] {
+                    0 => {
+                        self.instruction_pointer += 2;
                     }
-                }
-                4 => {
+                    _ => {
+                        self.instruction_pointer = self.literal()?;
+                    }
+                },
+                OpCode::Bxc => {
                     let _ = self.literal()?;
-                    self.registers[1] = self.registers[1] ^ self.registers[2];
-                    self.p += 2;
+                    self.registers[1] ^= self.registers[2];
+                    self.instruction_pointer += 2;
                 }
-                5 => {
-                    let op = self.combo()?;
-                    self.out.push(op % 8);
-                    self.p += 2;
+                OpCode::Out => {
+                    self.out.push(self.combo()? % 8);
+                    self.instruction_pointer += 2;
                 }
-                6 => {
-                    let num = self.registers[0];
-                    let op = self.combo()?;
-                    let denominator = 2isize.pow(op as u32);
-                    self.registers[1] = num / denominator;
-                    self.p += 2;
+                OpCode::Bdv => {
+                    self.registers[1] = self.registers[0] / 2usize.pow(self.combo()? as u32);
+                    self.instruction_pointer += 2;
                 }
-                7 => {
-                    let num = self.registers[0];
-                    let op = self.combo()?;
-                    let denominator = 2isize.pow(op as u32);
-                    self.registers[2] = num / denominator;
-                    self.p += 2;
+                OpCode::Cdv => {
+                    self.registers[2] = self.registers[0] / 2usize.pow(self.combo()? as u32);
+                    self.instruction_pointer += 2;
                 }
-                _ => unreachable!(),
             }
             Some(())
         } else {
@@ -148,26 +127,45 @@ impl Computer {
     }
 
     fn literal(&self) -> Option<usize> {
-        self.instructions.get(self.p + 1).copied()
+        self.instructions.get(self.instruction_pointer + 1).copied()
     }
 
-    fn reset(&mut self) {
-        self.p = 0;
-        self.out.clear();
-    }
-
-    fn combo(&self) -> Option<isize> {
-        let op = self.instructions.get(self.p + 1)?;
-        Some(match op {
-            0 => 0,
-            1 => 1,
-            2 => 2,
-            3 => 3,
+    fn combo(&self) -> Option<usize> {
+        let op = self.instructions.get(self.instruction_pointer + 1)?;
+        Some(match *op {
+            op if op <= 3 => op,
             4 => self.registers[0],
             5 => self.registers[1],
             6 => self.registers[2],
             _ => unreachable!(),
         })
+    }
+}
+
+enum OpCode {
+    Adv,
+    Bxl,
+    Bst,
+    Jnz,
+    Bxc,
+    Out,
+    Bdv,
+    Cdv,
+}
+
+impl From<usize> for OpCode {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => OpCode::Adv,
+            1 => OpCode::Bxl,
+            2 => OpCode::Bst,
+            3 => OpCode::Jnz,
+            4 => OpCode::Bxc,
+            5 => OpCode::Out,
+            6 => OpCode::Bdv,
+            7 => OpCode::Cdv,
+            _ => unreachable!(),
+        }
     }
 }
 
