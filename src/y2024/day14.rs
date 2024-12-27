@@ -1,9 +1,6 @@
-use std::collections::{HashMap, HashSet};
-use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
-use itertools::Itertools;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -20,80 +17,84 @@ fn part1(input: &str, y_len: usize, x_len: usize) -> usize {
         .collect::<Result<Vec<Guard>, ParseIntError>>()
         .unwrap();
     guards.iter_mut().for_each(|g| {
-        simulate2(g, 100, &grid);
+        simulate(g, 100, &grid);
     });
     let mid_y = (y_len / 2) as isize;
     let mid_x = (x_len / 2) as isize;
-    let mut tl = 0;
-    let mut tr = 0;
-    let mut bl = 0;
-    let mut br = 0;
-    for guard in guards {
-        if guard.pos.y == mid_y || guard.pos.x == mid_x {
-            continue;
-        }
-        if guard.pos.y - mid_y > 0 {
-            if guard.pos.x - mid_x > 0 {
-                br += 1;
-            } else {
-                bl += 1;
+    guards
+        .into_iter()
+        .map(|g| g.pos)
+        .fold([0; 4], |mut quadrants, pos| {
+            if let Some(i) = determine_quadrant(mid_y, mid_x, &pos) {
+                quadrants[i] += 1;
             }
-        } else {
-            if guard.pos.x - mid_x > 0 {
-                tr += 1;
-            } else {
-                tl += 1;
-            }
-        }
-    }
-    tl * tr * bl * br
+            quadrants
+        })
+        .iter()
+        .product()
 }
 
 fn part2(input: &str, y_len: usize, x_len: usize) -> usize {
-    let grid = Grid::new_with(y_len, x_len, '.');
+    let mut grid = Grid::new_with(y_len, x_len, '.');
     let mut guards = input
         .lines()
         .map(Guard::from_str)
         .collect::<Result<Vec<Guard>, ParseIntError>>()
         .unwrap();
-
-    for second in 1..10000 {
+    let mut second = 1;
+    loop {
         guards.iter_mut().for_each(|g| {
-            simulate2(g, 1, &grid);
+            simulate(g, 1, &grid);
         });
-        let counts: HashMap<Coordinate, usize> = guards.iter().fold(HashMap::new(), |mut acc, x| {
-            *acc.entry(x.pos).or_default() += 1;
-            acc
-        });
-
-        let mut str = String::new();
-        for y in 0..grid.y_len() {
-            for x in 0..grid.x_len() {
-                str.push(match counts.get(&Coordinate::new(y as isize, x as isize)) {
-                    Some(_) => {
-                        '#'
-                    },
-                    None => '.'
-                });
-            }
-            str.push('\n');
+        if mean_distance(&guards.iter().map(|g| g.pos).collect::<Vec<_>>()) < 800 {
+            break;
         }
-
-        // 278 is wrong but I can see the tree :(
-        if str.contains("############") {
-            println!("{}", str);
-            println!("Secs: {}", second);
-        }
+        second += 1;
     }
-    0
+    guards.iter().for_each(|g| {
+        grid.replace(&g.pos, '#');
+    });
+    println!("{}", grid);
+    second
 }
 
-pub fn simulate2(guard: &mut Guard, seconds: usize, grid: &Grid<char>) {
+fn simulate(guard: &mut Guard, seconds: usize, grid: &Grid<char>) {
     let new_y = ((guard.pos.y + guard.vel.dy * seconds as isize) % grid.y_len() as isize
-                 + grid.y_len() as isize) % grid.y_len() as isize;
+        + grid.y_len() as isize)
+        % grid.y_len() as isize;
     let new_x = ((guard.pos.x + guard.vel.dx * seconds as isize) % grid.x_len() as isize
-                 + grid.x_len() as isize) % grid.x_len() as isize;
+        + grid.x_len() as isize)
+        % grid.x_len() as isize;
     guard.pos = Coordinate::new(new_y, new_x);
+}
+
+fn determine_quadrant(mid_y: isize, mid_x: isize, pos: &Coordinate) -> Option<usize> {
+    if pos.y == mid_y || pos.x == mid_x {
+        return None;
+    }
+    Some(match (pos.y > mid_y, pos.x > mid_x) {
+        (true, true) => 0,
+        (true, false) => 1,
+        (false, true) => 2,
+        (false, false) => 3,
+    })
+}
+
+fn mean_distance(coordinates: &[Coordinate]) -> isize {
+    let n = coordinates.len() as isize;
+    let sum_x = coordinates.iter().map(|c| c.x).sum::<isize>();
+    let sum_y = coordinates.iter().map(|c| c.y).sum::<isize>();
+    let mean = Coordinate::new(sum_y / n, sum_x / n);
+
+    coordinates
+        .iter()
+        .map(|c| {
+            let dx = c.x - mean.x;
+            let dy = c.y - mean.y;
+            dx * dx + dy * dy
+        })
+        .sum::<isize>()
+        / n
 }
 
 #[derive(Debug)]
@@ -137,10 +138,5 @@ p=9,5 v=-3,-3";
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT, 7, 11), 12)
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(INPUT, 7, 11), 0)
     }
 }

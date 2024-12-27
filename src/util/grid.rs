@@ -19,7 +19,7 @@ impl<T: Copy + Default + PartialEq<T>> Grid<T> {
         let mut grid = Vec::with_capacity(y_len);
         for y in 0..y_len {
             grid.push(Vec::with_capacity(x_len));
-            for x in 0..x_len {
+            for _ in 0..x_len {
                 grid[y].push(initial_value);
             }
         }
