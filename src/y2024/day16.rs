@@ -1,8 +1,7 @@
-use std::cmp::Ordering;
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::str::FromStr;
 
 pub fn solve(input: &str) {
@@ -12,29 +11,15 @@ pub fn solve(input: &str) {
 
 fn part1(input: &str) -> usize {
     let maze = Grid::<char>::from_str(input).unwrap();
-    let start = maze.find(&'S').unwrap();
-    let paths = find_best_path(&maze, &start);
-    let mut best_score = usize::MAX;
-    for (score, _) in paths {
-        if score < best_score {
-            best_score = score;
-        }
-    }
-    best_score
+    let paths = find_best_paths(&maze);
+    paths.first().map(|(score, _)| *score).unwrap()
 }
 
 fn part2(input: &str) -> usize {
     let maze = Grid::<char>::from_str(input).unwrap();
-    let start = maze.find(&'S').unwrap();
-    let paths = find_best_path(&maze, &start);
-    let mut best_score = usize::MAX;
-    for (score, _) in paths.iter() {
-        if *score < best_score {
-            best_score = *score;
-        }
-    }
-    paths.into_iter()
-        .filter(|(score, path)| *score == best_score)
+    let paths = find_best_paths(&maze);
+    paths
+        .into_iter()
         .flat_map(|(_, path)| path)
         .collect::<HashSet<_>>()
         .len()
@@ -42,62 +27,70 @@ fn part2(input: &str) -> usize {
 
 #[derive(Clone, Eq, PartialEq)]
 struct State {
-    pos: Coordinate,
     cost: usize,
     dir: Direction,
-    path: Vec<Coordinate>
+    path: Vec<Coordinate>,
 }
 
-impl Ord for State {
-    fn cmp(&self, other: &State) -> Ordering {
-        self.cost.cmp(&other.cost).reverse()
-    }
-}
-
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &State) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-fn find_best_path(maze: &Grid<char>, start: &Coordinate) -> Vec<(usize, Vec<Coordinate>)> {
+fn find_best_paths(maze: &Grid<char>) -> Vec<(usize, Vec<Coordinate>)> {
+    let start = maze.find(&'S').unwrap();
     let mut distances: HashMap<(Coordinate, Direction), usize> = HashMap::new();
-    let mut queue = BinaryHeap::new();
-    queue.push(State { pos: *start, cost: 0usize, dir: Direction::new(0, 1), path: vec![*start]});
-    distances.insert((*start, Direction::new(0, 1)), 0);
+    let mut queue = VecDeque::new();
+    queue.push_back(State {
+        cost: 0usize,
+        dir: Direction::RIGHT,
+        path: vec![start],
+    });
+    distances.insert((start, Direction::RIGHT), 0);
 
-    let mut end_paths = Vec::<(usize, Vec<Coordinate>)>::new();
-    while let Some(state) = queue.pop() {
-        let val = maze.get(&state.pos);
+    let mut lowest_cost = usize::MAX;
+    let mut best_paths = Vec::<(usize, Vec<Coordinate>)>::new();
+    while let Some(state) = queue.pop_front() {
+        let pos = state.path.last().unwrap();
+        let val = maze.get(&pos);
         if val == Some(&'E') {
-            end_paths.push((state.cost, state.path));
+            if state.cost < lowest_cost {
+                best_paths.clear();
+            }
+            if state.cost <= lowest_cost {
+                best_paths.push((state.cost, state.path));
+                lowest_cost = state.cost;
+            }
             continue;
         }
-        if val == Some(&'#') || state.cost > *distances.get(&(state.pos, state.dir)).unwrap_or(&usize::MAX) {
+        if val == Some(&'#')
+            || state.cost > *distances.get(&(*pos, state.dir)).unwrap_or(&usize::MAX)
+        {
             continue;
         }
-        distances.insert((state.pos, state.dir), state.cost);
-        let mut path = state.path.clone();
-        path.push(Coordinate::new(state.pos.y + state.dir.dy, state.pos.x + state.dir.dx));
-        queue.push(State { pos: Coordinate::new(state.pos.y + state.dir.dy, state.pos.x + state.dir.dx), cost: state.cost + 1, dir: state.dir, path });
-        let left = state.dir.rotated_left();
-        let mut left_path = state.path.clone();
-        left_path.push(Coordinate::new(state.pos.y + left.dy, state.pos.x + left.dx));
-        queue.push(State { pos: Coordinate::new(state.pos.y + left.dy, state.pos.x + left.dx), cost: state.cost + 1000 + 1, dir: left, path: left_path });
+        distances.insert((*pos, state.dir), state.cost);
 
-        let right = state.dir.rotated_right();
-        let mut right_path = state.path.clone();
-        right_path.push(Coordinate::new(state.pos.y + right.dy, state.pos.x + right.dx));
-        queue.push(State { pos: Coordinate::new(state.pos.y + right.dy, state.pos.x + right.dx), cost: state.cost + 1000 + 1, dir: right, path: right_path });
+        [
+            state.dir,
+            state.dir.rotated_left(),
+            state.dir.rotated_right(),
+        ]
+        .into_iter()
+        .for_each(|dir| {
+            let rotation_penalty = if dir == state.dir { 0 } else { 1000 };
+            let mut path = state.path.clone();
+            let next = pos.offset(&dir);
+            path.push(next);
+            queue.push_back(State {
+                cost: state.cost + rotation_penalty + 1,
+                dir,
+                path,
+            });
+        });
     }
-    end_paths
+    best_paths
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const INPUT: &str = "###############
+    const FIRST: &str = "###############
 #.......#....E#
 #.#.###.#.###.#
 #.....#.#...#.#
@@ -113,7 +106,7 @@ mod tests {
 #S..#.....#...#
 ###############";
 
-    const INPUT2: &str = "#################
+    const SECOND: &str = "#################
 #...#...#...#..E#
 #.#.#.#.#.#.#.#.#
 #.#.#.#...#...#.#
@@ -133,11 +126,12 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(INPUT), 7036);
+        assert_eq!(part1(FIRST), 7036);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 0);
+        assert_eq!(part2(FIRST), 45);
+        assert_eq!(part2(SECOND), 64);
     }
 }

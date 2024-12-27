@@ -20,8 +20,7 @@ impl Coordinate {
 
 impl Ord for Coordinate {
     fn cmp(&self, other: &Coordinate) -> Ordering {
-        other.y.cmp(&self.y)
-            .then_with(|| self.x.cmp(&other.x))
+        other.y.cmp(&self.y).then_with(|| self.x.cmp(&other.x))
     }
 }
 
