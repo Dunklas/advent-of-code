@@ -15,6 +15,17 @@ impl<T: Copy + Default + PartialEq<T>> Grid<T> {
         Self { grid }
     }
 
+    pub fn new_with(y_len: usize, x_len: usize, initial_value: T) -> Self {
+        let mut grid = Vec::with_capacity(y_len);
+        for y in 0..y_len {
+            grid.push(Vec::with_capacity(x_len));
+            for _ in 0..x_len {
+                grid[y].push(initial_value);
+            }
+        }
+        Self::new(grid)
+    }
+
     pub fn get(&self, coordinate: &Coordinate) -> Option<&T> {
         self.grid
             .get(coordinate.y as usize)?
@@ -91,11 +102,11 @@ impl<T: Copy + Default + PartialEq<T>> Grid<T> {
         self.iter().map(|(_, value)| value)
     }
 
-    fn y_len(&self) -> usize {
+    pub fn y_len(&self) -> usize {
         self.grid.len()
     }
 
-    fn x_len(&self) -> usize {
+    pub fn x_len(&self) -> usize {
         self.grid[0].len()
     }
 }
