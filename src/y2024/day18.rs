@@ -1,9 +1,14 @@
 use crate::util::coordinate::Coordinate;
 use crate::util::dir::Direction;
 use crate::util::grid::Grid;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-const DIRECTIONS: [(isize, isize); 4] = [(-1, 0), (0, 1), (1, 0), (0, -1)];
+const DIRECTIONS: [Direction; 4] = [
+    Direction::UP,
+    Direction::RIGHT,
+    Direction::DOWN,
+    Direction::LEFT,
+];
 
 pub fn solve(input: &str) {
     println!("Part 1: {}", part1(input, 71, 1024));
@@ -17,43 +22,54 @@ fn part1(input: &str, size: usize, sim_len: usize) -> usize {
         grid.replace(&byte_pos, '#');
     });
     let target = Coordinate::new(size as isize - 1, size as isize - 1);
-    let path = shortes_path(&grid, &target).unwrap();
-    path
+    get_shortest_path(&grid, &target).unwrap().len()
 }
 
 fn part2(input: &str, size: usize) -> Option<Coordinate> {
     let bytes = parse(input);
     let mut grid = Grid::<char>::new_with(size, size, '.');
     let target = Coordinate::new(size as isize - 1, size as isize - 1);
+    let mut shortest_path = get_shortest_path(&grid, &target)?;
     for byte in bytes {
         grid.replace(&byte, '#');
-        if let None = shortes_path(&grid, &target) {
-            return Some(byte);
+        if shortest_path.contains(&byte) {
+            match get_shortest_path(&grid, &target) {
+                Some(new_path) => shortest_path = new_path,
+                None => return Some(byte),
+            }
         }
     }
     None
 }
 
-fn shortes_path(grid: &Grid<char>, target: &Coordinate) -> Option<usize> {
-    let mut stack = VecDeque::new();
+fn get_shortest_path(grid: &Grid<char>, target: &Coordinate) -> Option<HashSet<Coordinate>> {
+    let mut queue = VecDeque::new();
     let mut visited = HashSet::new();
-    stack.push_back((Coordinate::new(0, 0), 0));
+    let mut predecessors = HashMap::new();
+    queue.push_back(Coordinate::new(0, 0));
     visited.insert(Coordinate::new(0, 0));
-    while let Some((curr, path_len)) = stack.pop_front() {
-        if curr == *target {
-            return Some(path_len);
+    while let Some(current) = queue.pop_front() {
+        if current == *target {
+            let mut path = HashSet::new();
+            let mut current = current;
+            while let Some(prev) = predecessors.get(&current) {
+                path.insert(current);
+                current = *prev;
+            }
+            return Some(path);
         }
-        match grid.get(&curr) {
+        match grid.get(&current) {
             Some('#') | None => continue,
             _ => {}
         }
-        for (dy, dx) in DIRECTIONS.iter() {
-            let next = Coordinate::new(curr.y + dy, curr.x + dx);
+        for dir in DIRECTIONS.iter() {
+            let next = current.offset(dir);
             if visited.contains(&next) {
                 continue;
             }
             visited.insert(next);
-            stack.push_back((next, path_len + 1));
+            predecessors.insert(next, current);
+            queue.push_back(next);
         }
     }
     None
