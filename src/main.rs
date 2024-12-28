@@ -156,7 +156,6 @@ fn main() {
             "19" => {
                 y2024::day19::solve(&input);
             }
-
             "20" => {
                 y2024::day20::solve(&input);
             }

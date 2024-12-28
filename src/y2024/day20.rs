@@ -29,7 +29,7 @@ fn part2(input: &str, min_cost_reduction: usize) -> usize {
 fn identify_cheats(track: &Grid<char>, cheat_len: isize, min_cost_reduction: usize) -> Vec<usize> {
     let end = track.find(&'E').unwrap();
     let start = track.find(&'S').unwrap();
-    let path = path_distances(&track, &start, &end).unwrap();
+    let path = path_distances(track, &start, &end).unwrap();
     let cheat_positions = manhattan_destinations(cheat_len);
     let mut cheats = Vec::new();
     for (coord, cost) in path.iter() {
@@ -37,7 +37,7 @@ fn identify_cheats(track: &Grid<char>, cheat_len: isize, min_cost_reduction: usi
             continue;
         }
         for (cheat_dir, len) in cheat_positions.iter() {
-            let dst_coord = coord.offset(&cheat_dir);
+            let dst_coord = coord.offset(cheat_dir);
             if !path.contains_key(&dst_coord) {
                 continue;
             }
