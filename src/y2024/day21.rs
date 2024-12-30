@@ -37,12 +37,8 @@ fn total_complexity(input: &str, panels: &Vec<&ButtonPanel>) -> usize {
     input
         .lines()
         .map(|line| {
-            min_sequence_of_word(
-                &panels,
-                line.chars().collect(),
-                panels.len() - 1,
-                &mut cache,
-            ) * line.trim_end_matches("A").parse::<usize>().unwrap()
+            min_sequence_of_word(panels, line.chars().collect(), panels.len() - 1, &mut cache)
+                * line.trim_end_matches("A").parse::<usize>().unwrap()
         })
         .sum()
 }
